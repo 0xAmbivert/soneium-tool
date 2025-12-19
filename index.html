@@ -89,7 +89,7 @@
         try {
             const contract = new ethers.Contract(WETH_CONTRACT, ["function deposit() public payable"], signer);
             const tx = await contract.deposit({ value: ethers.utils.parseEther("0.00001") });
-            addLog("Wrapping 0.0001 ETH...");
+            addLog("Wrapping 0.00001 ETH...");
             await tx.wait();
             addLog("Success! ETH is now WETH.");
         } catch (e) { addLog("Wrap failed"); }
