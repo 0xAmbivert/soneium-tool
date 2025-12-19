@@ -41,7 +41,7 @@
     // --- SETTINGS (Change the POKE contract to yours!) ---
     const POKE_CONTRACT = "0xac3fa700149513bed425398f10a08767Aef138c3"; 
     const WETH_CONTRACT = "0x4200000000000000000000000000000000000006";
-    const NFT_CONTRACT = "0x_FIND_A_FREE_MINT_OR_LEAVE_BLANK"; // We will fill this next
+    const NFT_CONTRACT = "0xe134662e9CDf904Ea3D90dB3F527054ED3687d83"; // We will fill this next
 
     let signer, spamInterval, isSpamming = false;
 
@@ -112,8 +112,20 @@
 
     // TASK 4: MINT NFT
     async function mintNFT() {
-        alert("Visit an official Soneium partner like 'Blockchain Messages' or 'SoneFi' to find their current free mint address!");
-        // We will update this together once you find a collection you like!
+    try {
+        const nftAbi = ["function mint() public"];
+        const contract = new ethers.Contract(NFT_CONTRACT, nftAbi, signer);
+        
+        addLog("Requesting NFT Mint...");
+        const tx = await contract.mint();
+        addLog("Minting in progress: " + tx.hash.slice(0,10));
+        
+        await tx.wait();
+        addLog("Success! You now own a Builder NFT 🏆");
+    } catch (e) {
+        addLog("Mint failed: Check your gas/balance");
+    }
+}
     }
 </script>
 </body>
