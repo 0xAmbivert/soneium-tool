@@ -2,95 +2,118 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Soneium Tx Tool v2</title>
+    <title>Soneium Mastery Tool</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; padding-top: 50px; }
-        .card { background: #1e293b; padding: 30px; border-radius: 20px; width: 380px; border: 1px solid #334155; text-align: center; }
-        .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.3s; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .card { background: #1e293b; padding: 30px; border-radius: 20px; width: 380px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 12px; transition: 0.3s; font-size: 1rem; }
         .btn-connect { background: #38bdf8; color: #0f172a; }
-        .btn-start { background: #22c55e; color: white; display: none; }
-        .btn-stop { background: #ef4444; color: white; display: none; }
-        .stat { background: #334155; padding: 15px; border-radius: 12px; margin: 20px 0; font-family: monospace; font-size: 0.85rem; }
-        #counter { font-size: 2rem; color: #38bdf8; display: block; margin-top: 10px; }
+        .btn-poke { background: #6366f1; color: white; }
+        .btn-wrap { background: #10b981; color: white; }
+        .btn-nft { background: #ec4899; color: white; }
+        .log { background: #000; padding: 12px; border-radius: 10px; font-family: monospace; font-size: 0.75rem; height: 120px; overflow-y: auto; margin-top: 20px; color: #4ade80; border: 1px solid #1e293b; }
+        h3 { margin: 20px 0 5px 0; font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="margin:0">Soneium Spammer</h2>
-    <p style="color:#94a3b8; font-size: 0.8rem;">Ready for Zerion / MetaMask / Rabby</p>
+    <h2 style="text-align: center; margin-bottom: 25px;">Soneium Score Tool</h2>
+    <button id="connectBtn" class="btn btn-connect" onclick="connect()">Connect Zerion Wallet</button>
+    
+    <div id="controls" style="display:none;">
+        <h3>1. Daily Activity (Spam)</h3>
+        <button class="btn btn-poke" id="spamBtn" onclick="runSpam()">Start Transaction Spam</button>
 
-    <div class="stat">
-        Wallet: <span id="addr">Not Connected</span><br>
-        <span id="counter">0</span>
-        <small>Successful Transactions</small>
+        <h3>2. DeFi Interaction (High Value)</h3>
+        <button class="btn btn-wrap" onclick="wrapETH()">Wrap 0.0001 ETH</button>
+        <button class="btn btn-wrap" style="background:#64748b" onclick="unwrapETH()">Unwrap All WETH</button>
+
+        <h3>3. NFT Category (Required for 80)</h3>
+        <button class="btn btn-nft" onclick="mintNFT()">Mint Ecosystem NFT</button>
     </div>
 
-    <button id="connectBtn" class="btn btn-connect" onclick="initWallet()">Connect Wallet</button>
-    <button id="startBtn" class="btn btn-start" onclick="runSpam()">Start Popups (2s)</button>
-    <button id="stopBtn" class="btn btn-stop" onclick="stopSpam()">Stop</button>
-    
-    <p id="msg" style="font-size: 0.7rem; color: #f87171; margin-top: 15px;"></p>
+    <div class="log" id="log">Status: Connect your wallet to begin...</div>
 </div>
 
 <script>
-    let provider, signer, contract, interval;
-    let count = 0;
+    // --- SETTINGS (Change the POKE contract to yours!) ---
+    const POKE_CONTRACT = "0xac3fa700149513bed425398f10a08767Aef138c3"; 
+    const WETH_CONTRACT = "0x4200000000000000000000000000000000000006";
+    const NFT_CONTRACT = "0x_FIND_A_FREE_MINT_OR_LEAVE_BLANK"; // We will fill this next
 
-    // --- PASTE YOUR CONTRACT ADDRESS HERE ---
-    const contractAddress = "0xac3fa700149513bed425398f10a08767Aef138c3";
-    const abi = ["function poke() public"];
+    let signer, spamInterval, isSpamming = false;
 
-    async function initWallet() {
-        const message = document.getElementById("msg");
-        // Force look for ANY provider (window.ethereum is the standard)
-        const injected = window.ethereum || (window.zerion ? window.zerion.ethereum : null);
+    async function connect() {
+        if (!window.ethereum) return alert("Zerion/MetaMask not found!");
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        document.getElementById("controls").style.display = "block";
+        document.getElementById("connectBtn").innerText = "Wallet Linked ✅";
+        addLog("Connected to Soneium Mainnet");
+    }
 
-        if (!injected) {
-            message.innerText = "Error: Wallet not found. Please refresh page (F5) or ensure your wallet is unlocked.";
+    function addLog(msg) {
+        const div = document.getElementById("log");
+        div.innerHTML += `> ${msg}<br>`;
+        div.scrollTop = div.scrollHeight;
+    }
+
+    // TASK 1: THE SPAMMER
+    async function runSpam() {
+        if (isSpamming) {
+            clearInterval(spamInterval);
+            isSpamming = false;
+            document.getElementById("spamBtn").innerText = "Start Transaction Spam";
+            addLog("Spammer Stopped.");
             return;
         }
-
-        try {
-            provider = new ethers.providers.Web3Provider(injected);
-            const accounts = await provider.send("eth_requestAccounts", []);
-            signer = provider.getSigner();
-            contract = new ethers.Contract(contractAddress, abi, signer);
-
-            document.getElementById("addr").innerText = accounts[0].slice(0,6) + "..." + accounts[0].slice(-4);
-            document.getElementById("connectBtn").style.display = "none";
-            document.getElementById("startBtn").style.display = "block";
-            message.innerText = "Wallet Connected!";
-            message.style.color = "#22c55e";
-        } catch (e) {
-            message.innerText = "User denied connection.";
-        }
-    }
-
-    function runSpam() {
-        document.getElementById("startBtn").style.display = "none";
-        document.getElementById("stopBtn").style.display = "block";
+        isSpamming = true;
+        document.getElementById("spamBtn").innerText = "STOP SPAMMING";
+        addLog("Auto-Spam started (every 4 seconds)...");
         
-        interval = setInterval(async () => {
+        spamInterval = setInterval(async () => {
             try {
-                // This triggers the Zerion/MetaMask popup
+                const contract = new ethers.Contract(POKE_CONTRACT, ["function poke() public"], signer);
                 const tx = await contract.poke();
-                count++;
-                document.getElementById("counter").innerText = count;
-                // Wait for one tx to finish before next popup? 
-                // Remove 'await' if you want them to stack up (dangerous!)
-                await tx.wait(); 
-            } catch (err) {
-                console.log("Tx Cancelled");
-            }
-        }, 2000);
+                addLog("Sent: " + tx.hash.slice(0,10));
+                await tx.wait();
+            } catch (e) { addLog("Tx Cancelled or Failed"); }
+        }, 4000);
     }
 
-    function stopSpam() {
-        clearInterval(interval);
-        document.getElementById("stopBtn").style.display = "none";
-        document.getElementById("startBtn").style.display = "block";
+    // TASK 2: WRAP ETH (DeFi Point)
+    async function wrapETH() {
+        try {
+            const contract = new ethers.Contract(WETH_CONTRACT, ["function deposit() public payable"], signer);
+            const tx = await contract.deposit({ value: ethers.utils.parseEther("0.0001") });
+            addLog("Wrapping 0.0001 ETH...");
+            await tx.wait();
+            addLog("Success! ETH is now WETH.");
+        } catch (e) { addLog("Wrap failed"); }
+    }
+
+    // TASK 3: UNWRAP WETH
+    async function unwrapETH() {
+        try {
+            const contract = new ethers.Contract(WETH_CONTRACT, [
+                "function withdraw(uint256 wad) public",
+                "function balanceOf(address) view returns (uint256)"
+            ], signer);
+            const balance = await contract.balanceOf(await signer.getAddress());
+            const tx = await contract.withdraw(balance);
+            addLog("Unwrapping all WETH back to ETH...");
+            await tx.wait();
+            addLog("Success! WETH is now ETH.");
+        } catch (e) { addLog("Unwrap failed"); }
+    }
+
+    // TASK 4: MINT NFT
+    async function mintNFT() {
+        alert("Visit an official Soneium partner like 'Blockchain Messages' or 'SoneFi' to find their current free mint address!");
+        // We will update this together once you find a collection you like!
     }
 </script>
 </body>
