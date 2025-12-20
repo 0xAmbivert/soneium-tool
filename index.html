@@ -2,19 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Soneium Builder Dashboard</title>
+    <title>Soneium Mastery Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0b0e14; color: #e2e8f0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
         .card { background: #161b22; padding: 25px; border-radius: 16px; width: 380px; border: 1px solid #30363d; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; font-size: 0.9rem; }
         .btn-connect { background: #238636; color: white; }
         .btn-poke { background: #8957e5; color: white; }
         .btn-wrap { background: #1f6feb; color: white; }
         .btn-nft { background: #db61a2; color: white; }
-        .log { background: #010409; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; height: 120px; overflow-y: auto; margin-top: 15px; color: #7ee787; border: 1px solid #30363d; }
-        .stat-box { background: #21262d; padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center; font-size: 0.9rem; }
-        h3 { color: #8b949e; font-size: 0.8rem; text-transform: uppercase; margin: 20px 0 5px 0; }
+        .btn-stop { background: #dc2626 !important; color: white; }
+        .log { background: #010409; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; height: 140px; overflow-y: auto; margin-top: 15px; color: #7ee787; border: 1px solid #30363d; }
+        .stat-box { background: #21262d; padding: 10px; border-radius: 8px; margin-top: 10px; text-align: left; font-size: 0.85rem; border: 1px solid #30363d; line-height: 1.6; }
+        h3 { color: #8b949e; font-size: 0.75rem; text-transform: uppercase; margin: 20px 0 5px 0; letter-spacing: 1px; }
+        .badge { background: #30363d; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: #8b949e; float: right; }
     </style>
 </head>
 <body>
@@ -25,18 +27,20 @@
     
     <div id="controls" style="display:none;">
         <div class="stat-box">
-            NFTs Owned: <span id="nftCount" style="color:#db61a2; font-weight:bold;">0</span>
-            <button onclick="checkNFTBalance()" style="background:none; border:none; color:#58a6ff; cursor:pointer; font-size:0.7rem; text-decoration:underline; margin-left:10px;">Refresh</button>
+            <div>NFTs Owned: <span id="nftCount" style="color:#db61a2; font-weight:bold;">0</span> <span onclick="checkNFTBalance()" style="color:#58a6ff; cursor:pointer; text-decoration:underline; font-size:0.7rem; margin-left:10px;">Refresh</span></div>
+            <div style="border-top: 1px solid #30363d; margin-top:5px; padding-top:5px;">
+                Session Txs: <span id="sessionTxs" style="color:#7ee787; font-weight:bold;">0</span>
+            </div>
         </div>
 
-        <h3>1. Builder NFT (Custom Contract)</h3>
-        <button class="btn btn-nft" onclick="mintNFT()">Mint Your Custom NFT</button>
+        <h3>1. Builder NFT (Custom)</h3>
+        <button class="btn btn-nft" onclick="mintNFT()">Mint Custom NFT</button>
 
-        <h3>2. DeFi Interaction (Official)</h3>
-        <button class="btn btn-wrap" onclick="wrapETH()">Wrap 0.0001 ETH</button>
-        <button class="btn btn-wrap" style="background:#484f58" onclick="unwrapETH()">Unwrap All</button>
+        <h3>2. DeFi Spammer <span class="badge">Official WETH</span></h3>
+        <button class="btn btn-wrap" id="autoWrapBtn" onclick="toggleAutoWrap()" style="background:#059669;">Start Auto-Wrap (0.000001)</button>
+        <button class="btn btn-wrap" style="background:#484f58" onclick="unwrapETH()">Unwrap All WETH</button>
 
-        <h3>3. Transaction Spam</h3>
+        <h3>3. Low-Gas Spam <span class="badge">Custom Contract</span></h3>
         <button class="btn btn-poke" id="spamBtn" onclick="runSpam()">Start/Stop Poke</button>
     </div>
 
@@ -44,15 +48,16 @@
 </div>
 
 <script>
-    // --- YOUR SETTINGS ---
+    // --- SETTINGS ---
     const NFT_CONTRACT = "0xe134662e9CDf904Ea3D90dB3F527054ED3687d83";
     const POKE_CONTRACT = "0xac3fa700149513bed425398f10a08767Aef138c3";
     const WETH_CONTRACT = "0x4200000000000000000000000000000000000006";
     
-    // THE ABI YOU PROVIDED
     const NFT_ABI = [{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"address","name":"owner","type":"address"}],"name":"ERC721IncorrectOwner","type":"error"},{"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ERC721InsufficientApproval","type":"error"},{"inputs":[{"internalType":"address","name":"approver","type":"address"}],"name":"ERC721InvalidApprover","type":"error"},{"inputs":[{"internalType":"address","name":"operator","type":"address"}],"name":"ERC721InvalidOperator","type":"error"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"ERC721InvalidOwner","type":"error"},{"inputs":[{"internalType":"address","name":"receiver","type":"address"}],"name":"ERC721InvalidReceiver","type":"error"},{"inputs":[{"internalType":"address","name":"sender","type":"address"}],"name":"ERC721InvalidSender","type":"error"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ERC721NonexistentToken","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},{"inputs":[],"name":"mint","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"bool","name":"approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"transferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ownerOf","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenURI","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}];
 
-    let signer, spamInterval, isSpamming = false;
+    let signer, spamInterval, wrapInterval;
+    let isSpamming = false, isWrapping = false;
+    let txCount = 0;
 
     async function connect() {
         if (!window.ethereum) return alert("Wallet not found!");
@@ -61,7 +66,7 @@
         signer = provider.getSigner();
         document.getElementById("controls").style.display = "block";
         document.getElementById("connectBtn").innerText = "Connected";
-        addLog("Securely connected.");
+        addLog("Wallet connected to Soneium.");
         checkNFTBalance();
     }
 
@@ -69,6 +74,11 @@
         const div = document.getElementById("log");
         div.innerHTML += `> ${msg}<br>`;
         div.scrollTop = div.scrollHeight;
+    }
+
+    function updateCounter() {
+        txCount++;
+        document.getElementById("sessionTxs").innerText = txCount;
     }
 
     async function checkNFTBalance() {
@@ -84,53 +94,76 @@
         try {
             const contract = new ethers.Contract(NFT_CONTRACT, NFT_ABI, signer);
             const tx = await contract.mint();
-            addLog("Minting NFT from YOUR contract...");
+            addLog("Minting custom NFT...");
             await tx.wait();
-            addLog("Success! NFT Minted.");
+            addLog("Mint Successful!");
+            updateCounter();
             checkNFTBalance();
-        } catch (e) { addLog("Mint cancelled."); }
+        } catch (e) { addLog("Mint failed or rejected."); }
     }
 
-    async function wrapETH() {
-        try {
-            const contract = new ethers.Contract(WETH_CONTRACT, ["function deposit() public payable"], signer);
-            const tx = await contract.deposit({ value: ethers.utils.parseEther("0.00001") });
-            addLog("Wrapping 0.00001 ETH...");
-            await tx.wait();
-            addLog("Success! ETH -> WETH");
-        } catch (e) { addLog("Wrap failed."); }
+    async function toggleAutoWrap() {
+        const btn = document.getElementById("autoWrapBtn");
+        if (isWrapping) {
+            clearInterval(wrapInterval);
+            isWrapping = false;
+            btn.innerText = "Start Auto-Wrap (0.000001)";
+            btn.classList.remove("btn-stop");
+            addLog("Auto-Wrap STOPPED.");
+            return;
+        }
+        isWrapping = true;
+        btn.innerText = "STOP AUTO-WRAP";
+        btn.classList.add("btn-stop");
+        addLog("Auto-Wrap ACTIVE: 0.000001 ETH...");
+        
+        wrapInterval = setInterval(async () => {
+            try {
+                const contract = new ethers.Contract(WETH_CONTRACT, ["function deposit() public payable"], signer);
+                const tx = await contract.deposit({ value: ethers.utils.parseEther("0.000001") });
+                addLog("Wrap Sent: " + tx.hash.slice(0,10));
+                await tx.wait();
+                updateCounter();
+            } catch (e) { }
+        }, 5000);
     }
 
     async function unwrapETH() {
         try {
             const contract = new ethers.Contract(WETH_CONTRACT, ["function withdraw(uint256 wad) public", "function balanceOf(address) view returns (uint256)"], signer);
             const bal = await contract.balanceOf(await signer.getAddress());
+            if (bal.eq(0)) return addLog("No WETH found to unwrap.");
             const tx = await contract.withdraw(bal);
             addLog("Unwrapping all WETH...");
             await tx.wait();
-            addLog("Success! WETH -> ETH");
+            addLog("WETH -> ETH Success.");
+            updateCounter();
         } catch (e) { addLog("Unwrap failed."); }
     }
 
     async function runSpam() {
+        const btn = document.getElementById("spamBtn");
         if (isSpamming) {
             clearInterval(spamInterval);
             isSpamming = false;
-            document.getElementById("spamBtn").innerText = "Start/Stop Poke";
-            addLog("Spammer stopped.");
+            btn.innerText = "Start/Stop Poke";
+            btn.classList.remove("btn-stop");
+            addLog("Poke Spammer STOPPED.");
             return;
         }
         isSpamming = true;
-        document.getElementById("spamBtn").innerText = "STOPPING...";
-        addLog("Spammer active.");
+        btn.innerText = "STOP POKING";
+        btn.classList.add("btn-stop");
+        addLog("Poke Spammer ACTIVE.");
         spamInterval = setInterval(async () => {
             try {
                 const contract = new ethers.Contract(POKE_CONTRACT, ["function poke() public"], signer);
                 const tx = await contract.poke();
-                addLog("Poke: " + tx.hash.slice(0,10));
+                addLog("Poke Sent: " + tx.hash.slice(0,10));
                 await tx.wait();
+                updateCounter();
             } catch (e) { }
-        }, 3000);
+        }, 4000);
     }
 </script>
 </body>
