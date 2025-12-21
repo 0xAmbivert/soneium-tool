@@ -3,243 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soneium Mastery: Human Mode</title>
+    <title>Soneium Mastery Pro v5</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
-        :root {
-            --bg: #0d1117;
-            --card: #161b22;
-            --border: #30363d;
-            --primary: #8957e5;
-            --accent: #db61a2;
-            --text: #c9d1d9;
-            --success: #238636;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        .dashboard {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            width: 400px;
-            padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            background: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-size: 0.8rem;
-            border: 1px solid var(--border);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-            color: white;
-            font-size: 0.85rem;
-        }
-
-        .btn-main { background: var(--primary); }
-        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
-        .btn-outline:hover { background: var(--primary); color: white; }
-        
-        .btn-active { background: #dc2626 !important; border-color: #dc2626; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-
-        .section-header {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: #8b949e;
-            margin: 15px 0 8px 0;
-            letter-spacing: 1px;
-        }
-
-        .terminal {
-            background: #010409;
-            height: 130px;
-            overflow-y: auto;
-            border-radius: 6px;
-            padding: 10px;
-            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-            font-size: 0.7rem;
-            color: #7ee787;
-            border: 1px solid var(--border);
-            margin-top: 20px;
-        }
-
-        .highlight { color: var(--accent); font-weight: bold; }
+        :root { --bg: #050505; --card: rgba(22, 27, 34, 0.95); --primary: #8957e5; --accent: #db61a2; --success: #238636; --border: #30363d; --text: #f0f6fc; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-image: radial-gradient(circle at top right, rgba(137, 87, 229, 0.15), transparent); }
+        .container { background: var(--card); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 20px; width: 420px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+        .header h1 { font-size: 1.4rem; margin: 0; background: linear-gradient(90deg, #8957e5, #db61a2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
+        .countdown { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 10px; text-align: center; margin: 15px 0; font-size: 0.85rem; color: #f59e0b; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
+        .stat-label { font-size: 0.6rem; color: #8b949e; text-transform: uppercase; }
+        .stat-value { display: block; font-size: 1.1rem; font-weight: bold; color: var(--accent); }
+        .badge-vault { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .badge-card { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; opacity: 0.3; transition: 0.5s; filter: grayscale(1); }
+        .badge-card.unlocked { opacity: 1; border-color: var(--success); filter: grayscale(0); box-shadow: 0 0 10px rgba(35, 134, 54, 0.3); }
+        .badge-icon { font-size: 1.2rem; }
+        .badge-name { font-size: 0.55rem; color: #8b949e; display: block; }
+        .btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; font-size: 0.85rem; }
+        .btn-active { background: #dc2626 !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .terminal { background: #010409; border: 1px solid var(--border); border-radius: 8px; padding: 10px; height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #7ee787; margin-top: 15px; }
+        .section-tag { font-size: 0.65rem; color: #8b949e; text-transform: uppercase; margin: 15px 0 5px 0; border-bottom: 1px solid var(--border); padding-bottom: 3px; }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <h2 style="margin: 0 0 15px 0; font-size: 1.25rem;">Soneium Mastery <span style="font-size: 0.7rem; vertical-align: middle; padding: 2px 6px; background: #238636; border-radius: 10px; margin-left: 5px;">HUMAN MODE</span></h2>
+<div class="container">
+    <div class="header"><h1>SONEIUM BUILDER PRO</h1></div>
     
-    <button id="connectBtn" class="btn btn-main" onclick="connect()">Connect Wallet</button>
+    <div class="countdown">⏳ Season 5 Ends in: <span id="timer">--d --h --m</span></div>
 
-    <div id="ui" style="display:none;">
-        <div class="status-bar">
-            <span>TXs: <b id="txCount">0</b></span>
-            <span>NFTs: <b id="nftCount" class="highlight">0</b></span>
+    <button id="connectBtn" class="btn" style="background: var(--success);" onclick="connect()">Connect Soneium Wallet</button>
+
+    <div id="mainUI" style="display:none;">
+        <div class="stats">
+            <div class="stat-box"><span class="stat-label">Session TXs</span><span id="txCount" class="stat-value">0</span></div>
+            <div class="stat-box"><span class="stat-label">Current Score</span><span class="stat-value" style="color:#7ee787">72+</span></div>
         </div>
 
-        <div class="section-header">One-Time Actions</div>
-        <button class="btn btn-outline" onclick="mintNFT()">✨ Mint Custom Builder NFT</button>
-        <button class="btn btn-outline" onclick="sendSelf()">💸 Native Self-Transfer</button>
+        <div class="section-tag">Historical Badge Collection</div>
+        <div class="badge-vault">
+            <div id="badgeS1" class="badge-card"><span class="badge-icon">💎</span><span class="badge-name">Season 1</span></div>
+            <div id="badgeS2" class="badge-card"><span class="badge-icon">🔥</span><span class="badge-name">Season 2</span></div>
+            <div id="badgeS3" class="badge-card"><span class="badge-icon">👑</span><span class="badge-name">Season 3</span></div>
+        </div>
 
-        <div class="section-header">Multi-Contract Automation</div>
-        <button id="multiSpamBtn" class="btn btn-main" onclick="toggleMultiSpam()" style="background: #1f6feb;">🚀 Start Smart Multi-Spammer</button>
+        <div class="section-tag">Daily Tasks</div>
+        <button class="btn" style="background:#1f6feb" onclick="sendSelf()">💸 Native Self-Transfer (Human Pattern)</button>
+        <button id="spamBtn" class="btn" style="background:var(--primary)" onclick="toggleSpam()">🚀 Start Multi-Contract Loop</button>
         
-        <div class="section-header">DeFi Volume</div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn btn-outline" style="border-color: #238636; color: #3fb950;" onclick="wrapETH()">Wrap</button>
-            <button class="btn btn-outline" style="border-color: #484f58; color: #8b949e;" onclick="unwrapETH()">Unwrap</button>
+            <button class="btn" style="background:#30363d" onclick="wrapETH()">Wrap 0.000001</button>
+            <button class="btn" style="background:#30363d" onclick="unwrapETH()">Unwrap All</button>
         </div>
     </div>
 
-    <div class="terminal" id="log">Waiting for wallet connection...</div>
+    <div class="terminal" id="log">Awaiting connection...</div>
 </div>
 
 <script>
-    // --- OFFICIAL SONEIUM ADDRESSES ---
-    const CONTRACTS = {
+    const ADDR = {
         WETH: "0x4200000000000000000000000000000000000006",
-        USDC: "0xE9A198d38483aD727ABC8b0B1e16B2d338CF0391",
-        MULTICALL: "0xcA11bde05977b3631167028862bE2a173976CA11",
         POKE: "0xac3fa700149513bed425398f10a08767Aef138c3",
-        NFT: "0xe134662e9CDf904Ea3D90dB3F527054ED3687d83"
+        MCALL: "0xcA11bde05977b3631167028862bE2a173976CA11",
+        S1: "0xDC4b663FF330bdDE6551b66c1F94C0Bb9584cC3d",
+        S2: "0x1e7d7d315b54a82f938349a5cafec7b8ec6363dc",
+        S3: "0x7bf02b42b9d4ccd85b497c9f53e6b7474f9c2546"
     };
 
-    let signer, multiInterval, isMultiActive = false, totalTxs = 0;
+    let signer, isSpamming = false, txs = 0;
+
+    // 1. COUNTDOWN TIMER (Season 5 End: Jan 13, 2026)
+    function startTimer() {
+        const endDate = new Date("Jan 13, 2026 00:00:00").getTime();
+        setInterval(() => {
+            const now = new Date().getTime();
+            const d = endDate - now;
+            const days = Math.floor(d / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((d % (1000 * 60 * 60)) / (1000 * 60));
+            document.getElementById("timer").innerText = `${days}d ${hours}h ${mins}m`;
+        }, 1000);
+    }
+    startTimer();
 
     async function connect() {
-        if (!window.ethereum) return alert("MetaMask not found!");
+        if (!window.ethereum) return alert("Install MetaMask!");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
-        document.getElementById("ui").style.display = "block";
-        document.getElementById("connectBtn").innerText = "Wallet Connected";
-        addLog("Engine ready. Randomized delays enabled.");
-        updateNFTBalance();
+        document.getElementById("mainUI").style.display = "block";
+        document.getElementById("connectBtn").innerText = "Wallet Active";
+        addLog("Verified Connection. Scanning Vault...");
+        checkBadges();
     }
 
-    function addLog(msg) {
-        const div = document.getElementById("log");
-        div.innerHTML += `> ${msg}<br>`;
-        div.scrollTop = div.scrollHeight;
-    }
-
-    async function updateNFTBalance() {
+    async function checkBadges() {
         const abi = ["function balanceOf(address) view returns (uint256)"];
-        const contract = new ethers.Contract(CONTRACTS.NFT, abi, signer);
-        const bal = await contract.balanceOf(await signer.getAddress());
-        document.getElementById("nftCount").innerText = bal.toString();
+        const me = await signer.getAddress();
+        ["S1", "S2", "S3"].forEach(async (s) => {
+            try {
+                const contract = new ethers.Contract(ADDR[s], abi, signer);
+                if ((await contract.balanceOf(me)) > 0) document.getElementById(`badge${s}`).classList.add("unlocked");
+            } catch(e){}
+        });
     }
+
+    function addLog(m) { const l = document.getElementById("log"); l.innerHTML += `> ${m}<br>`; l.scrollTop = l.scrollHeight; }
 
     async function sendSelf() {
         try {
-            const addr = await signer.getAddress();
-            const tx = await signer.sendTransaction({ to: addr, value: ethers.utils.parseEther("0.000001") });
-            addLog("Self-send triggered...");
-            await tx.wait();
-            addLog("Success: Self-transfer confirmed.");
-            totalTxs++; document.getElementById("txCount").innerText = totalTxs;
-        } catch (e) { addLog("User rejected tx."); }
+            const tx = await signer.sendTransaction({ to: await signer.getAddress(), value: ethers.utils.parseEther("0.000001") });
+            addLog("Self-Transfer sent...");
+            await tx.wait(); addLog("Confirmed ✅");
+            txs++; document.getElementById("txCount").innerText = txs;
+        } catch(e) { addLog("TX Failed."); }
     }
 
-    // --- NEW SMART MULTI-SPAMMER ---
-    async function toggleMultiSpam() {
-        const btn = document.getElementById("multiSpamBtn");
-        if (isMultiActive) {
-            isMultiActive = false;
-            btn.innerText = "🚀 Start Smart Multi-Spammer";
-            btn.classList.remove("btn-active");
-            addLog("Sequence stopped.");
-            return;
-        }
-
-        isMultiActive = true;
-        btn.innerText = "STOP MULTI-SPAM";
-        btn.classList.add("btn-active");
-        runSmartLoop();
+    async function toggleSpam() {
+        isSpamming = !isSpamming;
+        const btn = document.getElementById("spamBtn");
+        btn.innerText = isSpamming ? "STOP LOOP" : "🚀 Start Multi-Contract Loop";
+        btn.className = isSpamming ? "btn btn-active" : "btn";
+        if (isSpamming) loop();
     }
 
-    async function runSmartLoop() {
-        if (!isMultiActive) return;
-
-        const actions = [
-            { name: "WETH Wrap", target: CONTRACTS.WETH, abi: ["function deposit() public payable"], call: (c) => c.deposit({value: ethers.utils.parseEther("0.000001")}) },
-            { name: "Contract Poke", target: CONTRACTS.POKE, abi: ["function poke() public"], call: (c) => c.poke() },
-            { name: "Multicall Info", target: CONTRACTS.MULTICALL, abi: ["function getEthBalance(address) view returns (uint256)"], call: (c) => c.getEthBalance(signer.getAddress()) }
+    async function loop() {
+        if (!isSpamming) return;
+        const tasks = [
+            { n: "WETH Wrap", f: () => new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({value: ethers.utils.parseEther("0.000001")}) },
+            { n: "Custom Poke", f: () => new ethers.Contract(ADDR.POKE, ["function poke()"], signer).poke() }
         ];
-
-        // Pick a random action
-        const action = actions[Math.floor(Math.random() * actions.length)];
-        addLog(`Initiating <span class="highlight">${action.name}</span>...`);
-
+        const task = tasks[Math.floor(Math.random()*tasks.length)];
+        addLog(`Auto: ${task.n}...`);
         try {
-            const contract = new ethers.Contract(action.target, action.abi, signer);
-            const tx = await action.call(contract);
-            
-            if (tx.hash) {
-                addLog(`TX Sent: ${tx.hash.slice(0,10)}`);
-                await tx.wait();
-                addLog(`TX Confirmed.`);
-                totalTxs++; document.getElementById("txCount").innerText = totalTxs;
-            } else {
-                addLog("Read-only call complete.");
-            }
-        } catch (e) { addLog("Skipping action (Error/Cancel)"); }
-
-        // Randomized Delay: 3 to 8 seconds
-        const delay = Math.floor(Math.random() * 5000) + 3000;
-        setTimeout(runSmartLoop, delay);
-    }
-
-    async function mintNFT() {
-        try {
-            const abi = ["function mint() public"];
-            const contract = new ethers.Contract(CONTRACTS.NFT, abi, signer);
-            const tx = await contract.mint();
-            addLog("Minting custom NFT...");
+            const tx = await task.f();
             await tx.wait();
-            addLog("NFT Minted!");
-            updateNFTBalance();
-        } catch (e) { addLog("Mint failed."); }
+            addLog(`Done: ${tx.hash.slice(0,10)}`);
+            txs++; document.getElementById("txCount").innerText = txs;
+        } catch(e){}
+        setTimeout(loop, Math.random() * 5000 + 3000); // 3-8s Random delay
     }
 
     async function wrapETH() {
-        const contract = new ethers.Contract(CONTRACTS.WETH, ["function deposit() public payable"], signer);
-        const tx = await contract.deposit({ value: ethers.utils.parseEther("0.000001") });
-        await tx.wait(); addLog("WETH Wrapped.");
+        const tx = await new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({value: ethers.utils.parseEther("0.000001")});
+        await tx.wait(); addLog("Wrapped 0.000001 ETH");
     }
 
     async function unwrapETH() {
-        const contract = new ethers.Contract(CONTRACTS.WETH, ["function withdraw(uint256) public", "function balanceOf(address) view returns (uint256)"], signer);
-        const bal = await contract.balanceOf(await signer.getAddress());
-        const tx = await contract.withdraw(bal);
-        await tx.wait(); addLog("WETH Unwrapped.");
+        const c = new ethers.Contract(ADDR.WETH, ["function withdraw(uint256)","function balanceOf(address) view returns (uint256)"], signer);
+        const b = await c.balanceOf(await signer.getAddress());
+        const tx = await c.withdraw(b);
+        await tx.wait(); addLog("WETH -> ETH Complete");
     }
 </script>
 </body>
