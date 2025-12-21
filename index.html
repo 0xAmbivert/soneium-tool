@@ -2,160 +2,121 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soneium Mastery Pro v5</title>
+    <title>Soneium Mastery: All Badges Unlocked</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <style>
-        :root { --bg: #050505; --card: rgba(22, 27, 34, 0.95); --primary: #8957e5; --accent: #db61a2; --success: #238636; --border: #30363d; --text: #f0f6fc; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-image: radial-gradient(circle at top right, rgba(137, 87, 229, 0.15), transparent); }
-        .container { background: var(--card); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 20px; width: 420px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
-        .header h1 { font-size: 1.4rem; margin: 0; background: linear-gradient(90deg, #8957e5, #db61a2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; }
-        .countdown { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 10px; text-align: center; margin: 15px 0; font-size: 0.85rem; color: #f59e0b; }
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
-        .stat-label { font-size: 0.6rem; color: #8b949e; text-transform: uppercase; }
-        .stat-value { display: block; font-size: 1.1rem; font-weight: bold; color: var(--accent); }
-        .badge-vault { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-        .badge-card { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 8px; text-align: center; opacity: 0.3; transition: 0.5s; filter: grayscale(1); }
-        .badge-card.unlocked { opacity: 1; border-color: var(--success); filter: grayscale(0); box-shadow: 0 0 10px rgba(35, 134, 54, 0.3); }
-        .badge-icon { font-size: 1.2rem; }
-        .badge-name { font-size: 0.55rem; color: #8b949e; display: block; }
-        .btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; font-size: 0.85rem; }
-        .btn-active { background: #dc2626 !important; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-        .terminal { background: #010409; border: 1px solid var(--border); border-radius: 8px; padding: 10px; height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #7ee787; margin-top: 15px; }
-        .section-tag { font-size: 0.65rem; color: #8b949e; text-transform: uppercase; margin: 15px 0 5px 0; border-bottom: 1px solid var(--border); padding-bottom: 3px; }
+        :root { --bg: #050505; --card: #121212; --primary: #8957e5; --accent: #db61a2; --success: #238636; --border: #333; --text: #e6e6e6; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: var(--card); border: 1px solid var(--border); border-radius: 20px; width: 420px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
+        .header h1 { font-size: 1.3rem; margin: 0; background: linear-gradient(90deg, #8957e5, #db61a2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; letter-spacing: 1px; }
+        .timer-box { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 12px; text-align: center; margin: 15px 0; }
+        #timer { font-family: monospace; font-weight: bold; font-size: 1.1rem; color: #f59e0b; }
+        .vault-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
+        .badge { background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 10px; text-align: center; opacity: 0.2; filter: grayscale(1); transition: 0.5s ease; }
+        .badge.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); box-shadow: 0 0 15px rgba(137, 87, 229, 0.3); }
+        .badge-icon { font-size: 1.5rem; display: block; }
+        .badge-name { font-size: 0.6rem; color: #777; font-weight: 600; }
+        .btn { width: 100%; padding: 13px; margin-top: 10px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 0.85rem; }
+        .btn-primary { background: var(--primary); }
+        .terminal { background: #000; border: 1px solid #222; border-radius: 10px; padding: 12px; height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #4af626; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header"><h1>SONEIUM BUILDER PRO</h1></div>
-    
-    <div class="countdown">⏳ Season 5 Ends in: <span id="timer">--d --h --m</span></div>
+    <div class="header"><h1>SONEIUM MASTERY PRO</h1></div>
+    <div class="timer-box">
+        <span style="font-size: 0.6rem; color: #f59e0b; text-transform: uppercase;">Season 5 Ends In</span><br>
+        <span id="timer">Calculating...</span>
+    </div>
 
-    <button id="connectBtn" class="btn" style="background: var(--success);" onclick="connect()">Connect Soneium Wallet</button>
+    <button id="connectBtn" class="btn btn-primary" onclick="connect()">Connect Web3 Wallet</button>
 
-    <div id="mainUI" style="display:none;">
-        <div class="stats">
-            <div class="stat-box"><span class="stat-label">Session TXs</span><span id="txCount" class="stat-value">0</span></div>
-            <div class="stat-box"><span class="stat-label">Current Score</span><span class="stat-value" style="color:#7ee787">72+</span></div>
+    <div id="dashboard" style="display:none;">
+        <div class="vault-grid">
+            <div id="badgeS1" class="badge"><span class="badge-icon">🥇</span><span class="badge-name">Season 1</span></div>
+            <div id="badgeS2" class="badge"><span class="badge-icon">🥈</span><span class="badge-name">Season 2</span></div>
+            <div id="badgeS3" class="badge"><span class="badge-icon">🥉</span><span class="badge-name">Season 3</span></div>
         </div>
-
-        <div class="section-tag">Historical Badge Collection</div>
-        <div class="badge-vault">
-            <div id="badgeS1" class="badge-card"><span class="badge-icon">💎</span><span class="badge-name">Season 1</span></div>
-            <div id="badgeS2" class="badge-card"><span class="badge-icon">🔥</span><span class="badge-name">Season 2</span></div>
-            <div id="badgeS3" class="badge-card"><span class="badge-icon">👑</span><span class="badge-name">Season 3</span></div>
-        </div>
-
-        <div class="section-tag">Daily Tasks</div>
-        <button class="btn" style="background:#1f6feb" onclick="sendSelf()">💸 Native Self-Transfer (Human Pattern)</button>
-        <button id="spamBtn" class="btn" style="background:var(--primary)" onclick="toggleSpam()">🚀 Start Multi-Contract Loop</button>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="btn" style="background:#30363d" onclick="wrapETH()">Wrap 0.000001</button>
-            <button class="btn" style="background:#30363d" onclick="unwrapETH()">Unwrap All</button>
-        </div>
+        <button id="spamBtn" class="btn btn-primary" onclick="toggleSpam()">🚀 Run Smart Loop</button>
+        <button class="btn" style="background:#222;" onclick="sendSelf()">💸 Native Self Transfer</button>
     </div>
 
     <div class="terminal" id="log">Awaiting connection...</div>
 </div>
 
 <script>
-    const ADDR = {
-        WETH: "0x4200000000000000000000000000000000000006",
-        POKE: "0xac3fa700149513bed425398f10a08767Aef138c3",
-        MCALL: "0xcA11bde05977b3631167028862bE2a173976CA11",
-        S1: "0xDC4b663FF330bdDE6551b66c1F94C0Bb9584cC3d",
-        S2: "0x1e7d7d315b54a82f938349a5cafec7b8ec6363dc",
-        S3: "0x7bf02b42b9d4ccd85b497c9f53e6b7474f9c2546"
+    const BADGES = {
+        S1: "0x05AB5e724848cEFeac6D303CDf94032E5Cc3552B",
+        S2: "0x6b2f6D8216E075D3a71F4aaf21d7158Af9B8dc82",
+        S3: "0x7BF02b42b9d4cCD85b497C9F53e6b7474f9c2546"
     };
 
-    let signer, isSpamming = false, txs = 0;
+    let signer, isSpamming = false;
 
-    // 1. COUNTDOWN TIMER (Season 5 End: Jan 13, 2026)
-    function startTimer() {
-        const endDate = new Date("Jan 13, 2026 00:00:00").getTime();
+    // Countdown Logic (Target: Jan 15, 2026 - approx 28 days from Dec 18)
+    function runTimer() {
+        const target = new Date("Jan 15, 2026 00:00:00").getTime();
         setInterval(() => {
-            const now = new Date().getTime();
-            const d = endDate - now;
-            const days = Math.floor(d / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((d % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const mins = Math.floor((d % (1000 * 60 * 60)) / (1000 * 60));
-            document.getElementById("timer").innerText = `${days}d ${hours}h ${mins}m`;
+            const diff = target - new Date().getTime();
+            const d = Math.floor(diff / 86400000);
+            const h = Math.floor((diff % 86400000) / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            document.getElementById("timer").innerText = `${d}D : ${h}H : ${m}M : ${s}S`;
         }, 1000);
     }
-    startTimer();
+    runTimer();
 
     async function connect() {
-        if (!window.ethereum) return alert("Install MetaMask!");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
-        document.getElementById("mainUI").style.display = "block";
-        document.getElementById("connectBtn").innerText = "Wallet Active";
-        addLog("Verified Connection. Scanning Vault...");
-        checkBadges();
+        document.getElementById("dashboard").style.display = "block";
+        document.getElementById("connectBtn").innerText = "Wallet Linked";
+        addLog("Wallet Connected. Scanning Badges...");
+        scanBadges();
     }
 
-    async function checkBadges() {
+    async function scanBadges() {
         const abi = ["function balanceOf(address) view returns (uint256)"];
         const me = await signer.getAddress();
-        ["S1", "S2", "S3"].forEach(async (s) => {
-            try {
-                const contract = new ethers.Contract(ADDR[s], abi, signer);
-                if ((await contract.balanceOf(me)) > 0) document.getElementById(`badge${s}`).classList.add("unlocked");
-            } catch(e){}
-        });
+        for (let s in BADGES) {
+            const contract = new ethers.Contract(BADGES[s], abi, signer);
+            const bal = await contract.balanceOf(me);
+            if (bal > 0) {
+                document.getElementById(`badge${s}`).classList.add("unlocked");
+                addLog(`Badge Found: Season ${s} Verified!`);
+            }
+        }
     }
 
-    function addLog(m) { const l = document.getElementById("log"); l.innerHTML += `> ${m}<br>`; l.scrollTop = l.scrollHeight; }
-
-    async function sendSelf() {
-        try {
-            const tx = await signer.sendTransaction({ to: await signer.getAddress(), value: ethers.utils.parseEther("0.000001") });
-            addLog("Self-Transfer sent...");
-            await tx.wait(); addLog("Confirmed ✅");
-            txs++; document.getElementById("txCount").innerText = txs;
-        } catch(e) { addLog("TX Failed."); }
+    function addLog(m) {
+        const l = document.getElementById("log");
+        l.innerHTML += `> ${m}<br>`;
+        l.scrollTop = l.scrollHeight;
     }
 
     async function toggleSpam() {
         isSpamming = !isSpamming;
-        const btn = document.getElementById("spamBtn");
-        btn.innerText = isSpamming ? "STOP LOOP" : "🚀 Start Multi-Contract Loop";
-        btn.className = isSpamming ? "btn btn-active" : "btn";
+        document.getElementById("spamBtn").innerText = isSpamming ? "STOP LOOP" : "🚀 Run Smart Loop";
         if (isSpamming) loop();
     }
 
     async function loop() {
         if (!isSpamming) return;
-        const tasks = [
-            { n: "WETH Wrap", f: () => new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({value: ethers.utils.parseEther("0.000001")}) },
-            { n: "Custom Poke", f: () => new ethers.Contract(ADDR.POKE, ["function poke()"], signer).poke() }
-        ];
-        const task = tasks[Math.floor(Math.random()*tasks.length)];
-        addLog(`Auto: ${task.n}...`);
+        addLog("Sending Tx...");
         try {
-            const tx = await task.f();
+            const tx = await signer.sendTransaction({ to: await signer.getAddress(), value: 0 });
             await tx.wait();
-            addLog(`Done: ${tx.hash.slice(0,10)}`);
-            txs++; document.getElementById("txCount").innerText = txs;
-        } catch(e){}
-        setTimeout(loop, Math.random() * 5000 + 3000); // 3-8s Random delay
+            addLog(`Success: ${tx.hash.slice(0,10)}`);
+        } catch(e) { addLog("Error/Cancelled"); }
+        setTimeout(loop, Math.random() * 5000 + 3000); // 3-8s delay
     }
 
-    async function wrapETH() {
-        const tx = await new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({value: ethers.utils.parseEther("0.000001")});
-        await tx.wait(); addLog("Wrapped 0.000001 ETH");
-    }
-
-    async function unwrapETH() {
-        const c = new ethers.Contract(ADDR.WETH, ["function withdraw(uint256)","function balanceOf(address) view returns (uint256)"], signer);
-        const b = await c.balanceOf(await signer.getAddress());
-        const tx = await c.withdraw(b);
-        await tx.wait(); addLog("WETH -> ETH Complete");
+    async function sendSelf() {
+        const tx = await signer.sendTransaction({ to: await signer.getAddress(), value: 0 });
+        addLog("Manual Tx Sent.");
     }
 </script>
 </body>
