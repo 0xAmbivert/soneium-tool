@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soneium Score | Official Automation Terminal</title>
+    <title>Soneium Score Optimizer</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
@@ -30,39 +30,36 @@
 
         .header { text-align: center; margin-bottom: 20px; }
         .header h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.5px; margin: 0; color: #fff; }
-        .header span { font-size: 0.6rem; color: #555; text-transform: uppercase; letter-spacing: 4px; }
+        .header span { font-size: 0.65rem; color: #777; text-transform: uppercase; letter-spacing: 2px; font-weight: 600; }
 
-        /* Countdown Panel */
         .timer-strip {
             background: #000; border: 1px solid #222; border-radius: 12px;
             padding: 12px; text-align: center; margin: 15px 0;
         }
         #timer { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: #ff3e3e; font-weight: bold; }
 
-        /* OG Badge - Advanced Shiny State */
         .og-vault {
             background: #000; border: 1px solid #111; border-radius: 24px;
             padding: 20px; text-align: center; margin-bottom: 20px; position: relative;
         }
         .og-badge-circle {
-            width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 10px;
+            width: 75px; height: 75px; border-radius: 50%; margin: 0 auto 10px;
             background: #111; border: 1px solid #222; display: flex;
-            align-items: center; justify-content: center; font-size: 2rem;
-            filter: grayscale(1); opacity: 0.1; transition: 1.5s cubic-bezier(0.17, 0.67, 0.83, 0.67);
-        }
-        /* The Shiny State */
-        .og-badge-circle.verified {
-            background: var(--og-gold); filter: grayscale(0); opacity: 1;
-            border: 2px solid #fff; box-shadow: 0 0 40px rgba(191, 149, 63, 0.5);
-            animation: shimmer 3s infinite linear;
-        }
-        @keyframes shimmer {
-            0% { filter: brightness(1) hue-rotate(0deg); transform: scale(1); }
-            50% { filter: brightness(1.4) hue-rotate(10deg); transform: scale(1.05); }
-            100% { filter: brightness(1) hue-rotate(0deg); transform: scale(1); }
+            align-items: center; justify-content: center; font-size: 2.2rem;
+            filter: grayscale(1); opacity: 0.1; transition: 1.5s ease;
         }
 
-        /* Stats & Seasonals */
+        .og-badge-circle.verified {
+            background: var(--og-gold); filter: grayscale(0); opacity: 1;
+            border: 2px solid #fff; box-shadow: 0 0 40px rgba(191, 149, 63, 0.6);
+            animation: gold-shimmer 3s infinite linear;
+        }
+        @keyframes gold-shimmer {
+            0% { filter: brightness(1); transform: scale(1); }
+            50% { filter: brightness(1.3); transform: scale(1.05); }
+            100% { filter: brightness(1); transform: scale(1); }
+        }
+
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .stat-box { background: #080808; border: 1px solid #1a1a1a; padding: 12px; border-radius: 16px; text-align: center; }
         .stat-label { font-size: 0.55rem; color: #555; text-transform: uppercase; }
@@ -75,7 +72,6 @@
         }
         .s-item.verified { opacity: 1; border-color: var(--primary); box-shadow: 0 0 15px rgba(137, 87, 229, 0.2); }
 
-        /* Controls */
         .btn {
             width: 100%; padding: 14px; border-radius: 14px; border: none; font-weight: 800;
             cursor: pointer; transition: 0.2s; font-size: 0.8rem; margin-bottom: 8px;
@@ -98,7 +94,7 @@
 <div class="terminal-container">
     <div class="header">
         <h1>SONEIUM MAINFRAME</h1>
-        <span>S5 SCORE OPTIMIZER</span>
+        <span>Soneium Score Optimizer</span>
     </div>
 
     <div class="timer-strip">
@@ -111,7 +107,7 @@
     <div id="ui" style="display:none;">
         <div class="og-vault">
             <div id="ogBadge" class="og-badge-circle">⭐</div>
-            <span style="font-size: 0.6rem; color: #888; font-weight: 700; text-transform: uppercase;">The Originator Protocol</span>
+            <span style="font-size: 0.65rem; color: #fcf6ba; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">OG Badge</span>
         </div>
 
         <div class="stats">
@@ -151,7 +147,7 @@
 
     let signer, isLooping = false, countTx = 0, countNft = 0;
 
-    // Fixed Timer logic (24d 18h from Dec 21 17:00)
+    // Fixed Timer for 24d 18h
     function runTimer() {
         const target = new Date("Jan 15, 2026 11:30:00").getTime();
         setInterval(() => {
@@ -166,6 +162,7 @@
     runTimer();
 
     async function init() {
+        if (!window.ethereum) return alert("MetaMask not found!");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
@@ -180,18 +177,17 @@
         const abi721 = ["function balanceOf(address) view returns (uint256)"];
         const abi1155 = ["function balanceOf(address, uint256) view returns (uint256)"];
 
-        // OG Check (1155 - Checking ID 0 and ID 1)
+        // OG Check (1155 Logic)
         try {
             const ogC = new ethers.Contract(ADDR.OG, abi1155, signer);
             const b0 = await ogC.balanceOf(me, 0);
             const b1 = await ogC.balanceOf(me, 1);
             if (b0 > 0 || b1 > 0) {
                 document.getElementById("ogBadge").classList.add("verified");
-                log("ORIGINATOR STATUS DETECTED ⭐");
+                log("OG STATUS DETECTED ⭐");
             }
         } catch(e) {}
 
-        // Seasonal Check (721)
         const seasons = ["S1", "S2", "S3"];
         for (let s of seasons) {
             try {
@@ -200,7 +196,6 @@
             } catch(e) {}
         }
 
-        // NFT Counter
         try {
             const nftC = new ethers.Contract(ADDR.NFT, abi721, signer);
             countNft = (await nftC.balanceOf(me)).toNumber();
@@ -237,7 +232,7 @@
         if (!isLooping) return;
         const acts = [poker, minter, wraper, async () => { await signer.sendTransaction({to: await signer.getAddress(), value: 0}); log("Self-Transfer Done."); countTx++; document.getElementById("txs").innerText = countTx; }];
         await acts[Math.floor(Math.random()*acts.length)]();
-        setTimeout(runLoop, Math.random()*5000 + 2000); // 2-7 seconds
+        setTimeout(runLoop, Math.random()*5000 + 2000);
     }
 </script>
 </body>
