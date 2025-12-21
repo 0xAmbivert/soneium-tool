@@ -2,121 +2,318 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Soneium Mastery: All Badges Unlocked</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soneium Mastery | Official Score Builder</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #050505; --card: #121212; --primary: #8957e5; --accent: #db61a2; --success: #238636; --border: #333; --text: #e6e6e6; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .container { background: var(--card); border: 1px solid var(--border); border-radius: 20px; width: 420px; padding: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.8); }
-        .header h1 { font-size: 1.3rem; margin: 0; background: linear-gradient(90deg, #8957e5, #db61a2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: center; letter-spacing: 1px; }
-        .timer-box { background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; padding: 12px; text-align: center; margin: 15px 0; }
-        #timer { font-family: monospace; font-weight: bold; font-size: 1.1rem; color: #f59e0b; }
-        .vault-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
-        .badge { background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 10px; text-align: center; opacity: 0.2; filter: grayscale(1); transition: 0.5s ease; }
-        .badge.unlocked { opacity: 1; filter: grayscale(0); border-color: var(--primary); box-shadow: 0 0 15px rgba(137, 87, 229, 0.3); }
-        .badge-icon { font-size: 1.5rem; display: block; }
-        .badge-name { font-size: 0.6rem; color: #777; font-weight: 600; }
-        .btn { width: 100%; padding: 13px; margin-top: 10px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; color: white; font-size: 0.85rem; }
-        .btn-primary { background: var(--primary); }
-        .terminal { background: #000; border: 1px solid #222; border-radius: 10px; padding: 12px; height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #4af626; margin-top: 20px; }
+        :root {
+            --bg: #030303;
+            --glass: rgba(17, 17, 17, 0.8);
+            --border: rgba(255, 255, 255, 0.1);
+            --primary: #8957e5;
+            --secondary: #db61a2;
+            --accent: #f59e0b;
+            --success: #00ff88;
+            --text: #ffffff;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(137, 87, 229, 0.15) 0%, transparent 25%),
+                radial-gradient(circle at 80% 80%, rgba(219, 97, 162, 0.15) 0%, transparent 25%);
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h1 { 
+            font-size: 1.6rem; margin: 0; font-weight: 800; 
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .header p { font-size: 0.75rem; color: #888; margin-top: 5px; text-transform: uppercase; letter-spacing: 2px; }
+
+        .countdown-timer {
+            background: rgba(245, 158, 11, 0.05);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #timer { font-family: 'JetBrains Mono', monospace; font-weight: bold; font-size: 1.1rem; color: var(--accent); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-label { font-size: 0.6rem; color: #666; text-transform: uppercase; display: block; }
+        .stat-value { font-size: 1.2rem; font-weight: 700; margin-top: 4px; }
+
+        .badge-vault {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .badge {
+            background: #0a0a0a;
+            border: 1px solid #222;
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+            opacity: 0.2;
+            transition: 0.5s all;
+            filter: grayscale(1);
+        }
+        .badge.unlocked {
+            opacity: 1; filter: grayscale(0); border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(137, 87, 229, 0.2);
+        }
+        .badge-icon { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+        .badge-name { font-size: 0.55rem; font-weight: 600; color: #888; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-connect { background: var(--primary); color: white; box-shadow: 0 10px 20px -5px rgba(137, 87, 229, 0.4); }
+        .btn-smart { background: linear-gradient(90deg, #1f6feb, #8957e5); color: white; }
+        .btn-secondary { background: #1a1a1a; border: 1px solid #333; color: #ccc; }
+        .btn-active { background: #dc2626 !important; animation: pulse 2s infinite; }
+
+        .terminal {
+            background: #000;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 15px;
+            height: 120px;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--success);
+            margin-top: 20px;
+            line-height: 1.5;
+        }
+
+        .section-title { font-size: 0.7rem; color: #555; text-transform: uppercase; margin: 20px 0 10px 0; display: flex; align-items: center; gap: 10px; }
+        .section-title::after { content: ''; flex: 1; height: 1px; background: #222; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header"><h1>SONEIUM MASTERY PRO</h1></div>
-    <div class="timer-box">
-        <span style="font-size: 0.6rem; color: #f59e0b; text-transform: uppercase;">Season 5 Ends In</span><br>
-        <span id="timer">Calculating...</span>
+<div class="app-container">
+    <div class="header">
+        <h1>SONEIUM SCORE PRO</h1>
+        <p>Advanced Automation Terminal</p>
     </div>
 
-    <button id="connectBtn" class="btn btn-primary" onclick="connect()">Connect Web3 Wallet</button>
+    <div class="countdown-timer">
+        <span id="timer">Loading Season 5 Intel...</span>
+    </div>
 
-    <div id="dashboard" style="display:none;">
-        <div class="vault-grid">
+    <button id="connectBtn" class="btn btn-connect" onclick="connect()">Connect Builder Wallet</button>
+
+    <div id="mainUI" style="display:none;">
+        <div class="stats-grid">
+            <div class="stat-card"><span class="stat-label">Session TXs</span><span id="txCount" class="stat-value">0</span></div>
+            <div class="stat-card"><span class="stat-label">Current Goal</span><span class="stat-value" style="color:var(--success)">80+</span></div>
+        </div>
+
+        <div class="section-title">Identity Vault</div>
+        <div class="badge-vault">
             <div id="badgeS1" class="badge"><span class="badge-icon">🥇</span><span class="badge-name">Season 1</span></div>
             <div id="badgeS2" class="badge"><span class="badge-icon">🥈</span><span class="badge-name">Season 2</span></div>
             <div id="badgeS3" class="badge"><span class="badge-icon">🥉</span><span class="badge-name">Season 3</span></div>
         </div>
-        <button id="spamBtn" class="btn btn-primary" onclick="toggleSpam()">🚀 Run Smart Loop</button>
-        <button class="btn" style="background:#222;" onclick="sendSelf()">💸 Native Self Transfer</button>
+
+        <div class="section-title">Multi-Task Automation</div>
+        <button id="smartLoopBtn" class="btn btn-smart" onclick="toggleSmartLoop()">⚡ Start Smart Mix Loop (Random 2-7s)</button>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn btn-secondary" onclick="runPoke()">🧪 Poke Spammer</button>
+            <button class="btn btn-secondary" onclick="runMint()">✨ Mint NFT</button>
+        </div>
+
+        <div class="section-title">Liquidity Actions</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="btn btn-secondary" onclick="runWrap()">📥 Wrap 0.0000001</button>
+            <button class="btn btn-secondary" onclick="runUnwrap()">📤 Unwrap All</button>
+        </div>
+        <button class="btn btn-secondary" onclick="runSelfSend()">💸 Human Self-Transfer</button>
     </div>
 
-    <div class="terminal" id="log">Awaiting connection...</div>
+    <div class="terminal" id="log">Initialize system by connecting wallet...</div>
 </div>
 
 <script>
-    const BADGES = {
+    // --- OFFICIAL CONFIGURATION ---
+    const ADDR = {
         S1: "0x05AB5e724848cEFeac6D303CDf94032E5Cc3552B",
         S2: "0x6b2f6D8216E075D3a71F4aaf21d7158Af9B8dc82",
-        S3: "0x7BF02b42b9d4cCD85b497C9F53e6b7474f9c2546"
+        S3: "0x7BF02b42b9d4cCD85b497C9F53e6b7474f9c2546",
+        POKE: "0xac3fa700149513bed425398f10a08767Aef138c3",
+        NFT: "0xe134662e9CDf904Ea3D90dB3F527054ED3687d83",
+        WETH: "0x4200000000000000000000000000000000000006"
     };
 
-    let signer, isSpamming = false;
+    let signer, isLooping = false, txTotal = 0;
 
-    // Countdown Logic (Target: Jan 15, 2026 - approx 28 days from Dec 18)
-    function runTimer() {
-        const target = new Date("Jan 15, 2026 00:00:00").getTime();
+    // Timer Logic
+    function startCountdown() {
+        const end = new Date("Jan 13, 2026 00:00:00").getTime();
         setInterval(() => {
-            const diff = target - new Date().getTime();
-            const d = Math.floor(diff / 86400000);
-            const h = Math.floor((diff % 86400000) / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            document.getElementById("timer").innerText = `${d}D : ${h}H : ${m}M : ${s}S`;
+            const now = new Date().getTime();
+            const d = end - now;
+            const days = Math.floor(d / 86400000);
+            const hours = Math.floor((d % 86400000) / 3600000);
+            const mins = Math.floor((d % 3600000) / 60000);
+            const secs = Math.floor((d % 60000) / 1000);
+            document.getElementById("timer").innerText = `S5 ENDS: ${days}D ${hours}H ${mins}M ${secs}S`;
         }, 1000);
     }
-    runTimer();
+    startCountdown();
 
     async function connect() {
+        if (!window.ethereum) return alert("Please install MetaMask!");
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
-        document.getElementById("dashboard").style.display = "block";
-        document.getElementById("connectBtn").innerText = "Wallet Linked";
-        addLog("Wallet Connected. Scanning Badges...");
+        document.getElementById("mainUI").style.display = "block";
+        document.getElementById("connectBtn").innerText = "Wallet Integrated";
+        addLog("System Online. Scanning Badge Vault...");
         scanBadges();
     }
 
     async function scanBadges() {
         const abi = ["function balanceOf(address) view returns (uint256)"];
         const me = await signer.getAddress();
-        for (let s in BADGES) {
-            const contract = new ethers.Contract(BADGES[s], abi, signer);
-            const bal = await contract.balanceOf(me);
-            if (bal > 0) {
-                document.getElementById(`badge${s}`).classList.add("unlocked");
-                addLog(`Badge Found: Season ${s} Verified!`);
+        for (let s in ADDR) {
+            if (s.startsWith("S")) {
+                try {
+                    const contract = new ethers.Contract(ADDR[s], abi, signer);
+                    const bal = await contract.balanceOf(me);
+                    if (bal > 0) {
+                        document.getElementById(`badge${s}`).classList.add("unlocked");
+                        addLog(`Verified: Season ${s} Achievement found.`);
+                    }
+                } catch(e) {}
             }
         }
     }
 
-    function addLog(m) {
+    function addLog(msg) {
         const l = document.getElementById("log");
-        l.innerHTML += `> ${m}<br>`;
+        l.innerHTML += `[${new Date().toLocaleTimeString()}] > ${msg}<br>`;
         l.scrollTop = l.scrollHeight;
     }
 
-    async function toggleSpam() {
-        isSpamming = !isSpamming;
-        document.getElementById("spamBtn").innerText = isSpamming ? "STOP LOOP" : "🚀 Run Smart Loop";
-        if (isSpamming) loop();
+    function updateCounter() {
+        txTotal++;
+        document.getElementById("txCount").innerText = txTotal;
     }
 
-    async function loop() {
-        if (!isSpamming) return;
-        addLog("Sending Tx...");
+    // --- TRANSACTION FUNCTIONS ---
+    async function runPoke() {
+        try {
+            const c = new ethers.Contract(ADDR.POKE, ["function poke()"], signer);
+            const tx = await c.poke();
+            addLog("Poking contract...");
+            await tx.wait(); addLog("Poke Confirmed ✅"); updateCounter();
+        } catch(e) { addLog("Poke Rejected ❌"); }
+    }
+
+    async function runMint() {
+        try {
+            const c = new ethers.Contract(ADDR.NFT, ["function mint()"], signer);
+            const tx = await c.mint();
+            addLog("Minting Score NFT...");
+            await tx.wait(); addLog("Mint Confirmed ✅"); updateCounter();
+        } catch(e) { addLog("Mint Rejected ❌"); }
+    }
+
+    async function runWrap() {
+        try {
+            const c = new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer);
+            const tx = await c.deposit({ value: ethers.utils.parseUnits("0.0000001", "ether") });
+            addLog("Wrapping ETH...");
+            await tx.wait(); addLog("Wrap Confirmed ✅"); updateCounter();
+        } catch(e) { addLog("Wrap Rejected ❌"); }
+    }
+
+    async function runUnwrap() {
+        try {
+            const c = new ethers.Contract(ADDR.WETH, ["function withdraw(uint256 wad)", "function balanceOf(address) view returns (uint256)"], signer);
+            const bal = await c.balanceOf(await signer.getAddress());
+            const tx = await c.withdraw(bal);
+            addLog("Unwrapping all WETH...");
+            await tx.wait(); addLog("Unwrap Confirmed ✅"); updateCounter();
+        } catch(e) { addLog("Unwrap Rejected ❌"); }
+    }
+
+    async function runSelfSend() {
         try {
             const tx = await signer.sendTransaction({ to: await signer.getAddress(), value: 0 });
-            await tx.wait();
-            addLog(`Success: ${tx.hash.slice(0,10)}`);
-        } catch(e) { addLog("Error/Cancelled"); }
-        setTimeout(loop, Math.random() * 5000 + 3000); // 3-8s delay
+            addLog("Executing Self-Transfer...");
+            await tx.wait(); addLog("Transfer Confirmed ✅"); updateCounter();
+        } catch(e) { addLog("Transfer Rejected ❌"); }
     }
 
-    async function sendSelf() {
-        const tx = await signer.sendTransaction({ to: await signer.getAddress(), value: 0 });
-        addLog("Manual Tx Sent.");
+    // --- SMART LOOP ---
+    async function toggleSmartLoop() {
+        isLooping = !isLooping;
+        const btn = document.getElementById("smartLoopBtn");
+        btn.innerText = isLooping ? "STOP SMART LOOP" : "⚡ Start Smart Mix Loop (Random 2-7s)";
+        btn.className = isLooping ? "btn btn-smart btn-active" : "btn btn-smart";
+        if (isLooping) smartLoop();
+    }
+
+    async function smartLoop() {
+        if (!isLooping) return;
+        
+        const tasks = [runPoke, runMint, runWrap, runSelfSend];
+        const randomTask = tasks[Math.floor(Math.random() * tasks.length)];
+        
+        addLog(`Looping: Random Task Selected...`);
+        await randomTask();
+        
+        const delay = Math.floor(Math.random() * 5000) + 2000; // 2 to 7 seconds
+        setTimeout(smartLoop, delay);
     }
 </script>
 </body>
