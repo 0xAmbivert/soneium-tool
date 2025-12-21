@@ -44,7 +44,7 @@
             border: 2px solid #fff; box-shadow: 0 0 40px rgba(191, 149, 63, 0.6);
             animation: gold-shimmer 3s infinite linear;
         }
-        @keyframes gold-shimmer { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); brightness(1.2); } }
+        @keyframes gold-shimmer { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); filter: brightness(1.2); } }
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .stat-box { background: #080808; border: 1px solid #1a1a1a; padding: 12px; border-radius: 16px; text-align: center; }
         .stat-label { font-size: 0.55rem; color: #555; text-transform: uppercase; }
@@ -103,7 +103,7 @@
 </div>
 
 <script>
-    const SONEIUM_ID = "0x74a"; // 1866 decimal
+    const SONEIUM_ID = "0x74c"; // Hex for 1868 as seen in your image
     const ADDR = {
         S1: "0x05AB5e724848cEFeac6D303CDf94032E5Cc3552B",
         S2: "0x6b2f6D8216E075D3a71F4aaf21d7158Af9B8dc82",
@@ -130,7 +130,7 @@
     async function checkNetwork() {
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         if (chainId !== SONEIUM_ID) {
-            log("Wrong Network! Switching to Soneium...");
+            log("Switching to Soneium Mainnet (Chain 1868)...");
             try {
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
@@ -144,8 +144,8 @@
                             chainId: SONEIUM_ID,
                             chainName: 'Soneium',
                             nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
-                            rpcUrls: ['https://rpc.soneium.org'],
-                            blockExplorerUrls: ['https://explorer.soneium.org']
+                            rpcUrls: ['https://rpc.zerion.io/v1/soneium'],
+                            blockExplorerUrls: ['https://soneium.blockscout.com']
                         }]
                     });
                 }
