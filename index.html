@@ -108,10 +108,11 @@
 
             <div class="panel">
                 <h4 style="margin-top:0; font-size: 0.8rem; color: var(--text-dim);">SEASONAL ARCHIVE</h4>
-                <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stats-row" style="grid-template-columns: repeat(2, 1fr);">
                     <div id="s1" class="stat-item" style="opacity:0.1">💎<br><small>S1</small></div>
                     <div id="s2" class="stat-item" style="opacity:0.1">🔥<br><small>S2</small></div>
                     <div id="s3" class="stat-item" style="opacity:0.1">👑<br><small>S3</small></div>
+                    <div id="s4" class="stat-item" style="opacity:0.1">🏆<br><small>S4</small></div>
                 </div>
             </div>
         </div>
@@ -179,6 +180,7 @@
         S1: "0x05AB5e724848cEFeac6D303CDf94032E5Cc3552B",
         S2: "0x6b2f6D8216E075D3a71F4aaf21d7158Af9B8dc82",
         S3: "0x7BF02b42b9d4cCD85b497C9F53e6b7474f9c2546",
+        S4: "0x17121f9a7041ffe3ef248f7b84658d9229bad64f",
         OG: "0x2A21B17E366836e5FFB19bd47edB03b4b551C89d",
         POKE: "0xac3fa700149513bed425398f10a08767Aef138c3",
         NFT: "0xe134662e9CDf904Ea3D90dB3F527054ED3687d83",
@@ -247,7 +249,7 @@
             }
         } catch(e) {}
 
-        ["S1", "S2", "S3"].forEach(async s => {
+        ["S1", "S2", "S3", "S4"].forEach(async s => {
             try {
                 const c = new ethers.Contract(ADDR[s], abi721, signer);
                 if ((await c.balanceOf(me)).gt(0)) {
@@ -274,7 +276,6 @@
             const deadline = Math.floor(Date.now() / 1000) + 600;
             const myAddr = await signer.getAddress();
             
-            // Command 0x0b is WRAP_ETH
             const tx = await router.execute(
                 "0x0b", 
                 [ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [myAddr, amount])],
