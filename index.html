@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soneium Score Optimizer | Pro v3.2</title>
+    <title>Soneium Score Optimizer | Desktop v2.0</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
@@ -21,7 +21,7 @@
         nav {
             display: flex; justify-content: space-between; align-items: center;
             padding: 20px 60px; border-bottom: 1px solid var(--border);
-            background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
             position: sticky; top: 0; z-index: 100;
         }
         .logo { font-weight: 900; font-size: 1.2rem; letter-spacing: -0.5px; }
@@ -39,17 +39,20 @@
             display: grid; grid-template-columns: 350px 1fr; gap: 30px; width: 100%;
         }
 
-        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; }
 
         .og-card { text-align: center; margin-bottom: 20px; }
-        .badge-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 15px; }
-        .badge-slot { 
-            aspect-ratio: 1; background: #000; border: 1px solid var(--border); 
-            border-radius: 10px; display: flex; align-items: center; justify-content: center;
-            font-size: 0.9rem; opacity: 0.1; transition: 0.5s; 
+        .og-badge-circle {
+            width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 15px;
+            background: #1a1a1a; border: 1px solid #333; display: flex;
+            align-items: center; justify-content: center; font-size: 3rem;
+            filter: grayscale(1); opacity: 0.1; transition: 1.5s ease;
         }
-        .badge-slot.active { opacity: 1; border-color: var(--primary); color: var(--primary); background: rgba(137, 87, 229, 0.1); }
-        .badge-slot.og-active { opacity: 1; background: var(--og-gold); border: none; color: #000; font-weight: bold; }
+        .og-badge-circle.verified {
+            background: var(--og-gold); filter: grayscale(0); opacity: 1;
+            border: 2px solid #fff; box-shadow: 0 0 50px rgba(191, 149, 63, 0.4);
+            animation: gold-shimmer 3s infinite linear;
+        }
 
         .btn {
             padding: 12px 24px; border-radius: 12px; border: none; font-weight: 700;
@@ -58,7 +61,7 @@
         .btn-connect { background: #fff; color: #000; }
         .btn-primary { background: var(--primary); color: #fff; width: 100%; margin-bottom: 10px; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dim); width: 100%; margin-bottom: 10px; }
-        .btn-outline:hover { border-color: #555; color: #fff; background: rgba(255,255,255,0.05); }
+        .btn-outline:hover { border-color: #555; color: #fff; }
         .btn-loop-active { background: #ff3e3e !important; box-shadow: 0 0 20px rgba(255,62,62,0.4); }
 
         .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
@@ -71,9 +74,15 @@
             color: var(--success); height: 300px; overflow-y: auto;
         }
 
-        footer { border-top: 1px solid var(--border); padding: 40px 60px; background: #000; display: flex; justify-content: space-between; }
-        .footer-links a { display: block; color: var(--text-dim); text-decoration: none; margin-bottom: 8px; font-size: 0.8rem; }
-        .footer-links a:hover { color: var(--primary); }
+        footer {
+            border-top: 1px solid var(--border); padding: 40px 60px;
+            background: #000; display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .footer-links h4 { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 15px; }
+        .footer-links a { display: block; color: #fff; text-decoration: none; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.6; }
+        .footer-links a:hover { opacity: 1; color: var(--primary); }
+
+        @keyframes gold-shimmer { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); filter: brightness(1.2); } }
     </style>
 </head>
 <body>
@@ -92,19 +101,18 @@
     <div id="ui" class="dashboard-grid" style="display:none; opacity: 0;">
         <div class="left-col">
             <div class="panel og-card">
-                <h3 style="margin:0 0 15px 0; font-size: 1rem;">Reputation Archive</h3>
-                <div class="badge-grid">
-                    <div id="og-badge" class="badge-slot">OG</div>
-                    <div id="s1-badge" class="badge-slot">S1</div>
-                    <div id="s2-badge" class="badge-slot">S2</div>
-                    <div id="s3-badge" class="badge-slot">S3</div>
-                    <div id="s4-badge" class="badge-slot">S4</div>
-                </div>
+                <div id="ogBadge" class="og-badge-circle">⭐</div>
+                <h3 style="margin:0; font-size: 1.1rem;">OG Badge</h3>
+                <p style="color: var(--text-dim); font-size: 0.75rem;">Verified on Soneium Mainnet</p>
             </div>
 
             <div class="panel">
-                <h4 style="margin-top:0; font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;">Quick Links</h4>
-                <a href="https://opensea.io/collection/soneium-minato-season-4" target="_blank" class="btn btn-outline" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">🌊 Claim S4 Badge</a>
+                <h4 style="margin-top:0; font-size: 0.8rem; color: var(--text-dim);">SEASONAL ARCHIVE</h4>
+                <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
+                    <div id="s1" class="stat-item" style="opacity:0.1">💎<br><small>S1</small></div>
+                    <div id="s2" class="stat-item" style="opacity:0.1">🔥<br><small>S2</small></div>
+                    <div id="s3" class="stat-item" style="opacity:0.1">👑<br><small>S3</small></div>
+                </div>
             </div>
         </div>
 
@@ -117,27 +125,53 @@
                     </div>
                     <div class="stat-item">
                         <span class="stat-val" id="nfts">0</span>
-                        <span style="font-size: 0.6rem; color: var(--text-dim);">TOTAL WALLET NFTS</span>
+                        <span style="font-size: 0.6rem; color: var(--text-dim);">TOTAL NFT MINTED</span>
                     </div>
                 </div>
 
                 <button id="loopBtn" class="btn btn-primary" onclick="toggleLoop()">⚡ START SMART MIX LOOP (RANDOM 2-7S)</button>
                 
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;">
                     <button class="btn btn-outline" onclick="poker()">🧪 POKE</button>
                     <button class="btn btn-outline" onclick="minter()">✨ MINT NFT</button>
                     <button class="btn btn-outline" onclick="uniSwapCycle()">🦄 UNI SWAP</button>
                     <button class="btn btn-outline" onclick="wraper()">📥 WRAP</button>
-                    <button class="btn btn-outline" onclick="unwraper()">📤 UNWRAP</button>
+                    <button class="btn btn-outline" onclick="unwraper()">📤 UNWRAP ALL</button>
                     <button class="btn btn-outline" onclick="heartbeat()">💓 HEARTBEAT</button>
                 </div>
 
                 <h4 style="margin: 25px 0 10px 0; font-size: 0.7rem; color: var(--text-dim);">LIVE EXECUTION TERMINAL</h4>
-                <div class="log-area" id="logs">SYSTEM READY... STANDING BY.</div>
+                <div class="log-area" id="logs">SYSTEM READY... STANDING BY FOR WALLET CONNECTION.</div>
             </div>
         </div>
     </div>
 </main>
+
+<footer>
+    <div style="max-width: 300px;">
+        <div class="logo" style="margin-bottom: 15px;">SONEIUM <span>SCORE</span></div>
+        <p style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.6;">Automated utility suite for the Soneium ecosystem. Optimized for Uniswap and official Sony network interactions.</p>
+    </div>
+    
+    <div class="footer-links">
+        <h4>Ecosystem</h4>
+        <a href="https://soneium.org" target="_blank">Official Website</a>
+        <a href="https://bridge.soneium.org" target="_blank">Soneium Bridge</a>
+        <a href="https://soneium.blockscout.com" target="_blank">Block Explorer</a>
+    </div>
+
+    <div class="footer-links">
+        <h4>Socials</h4>
+        <a href="https://x.com/soneium" target="_blank">Twitter / X</a>
+        <a href="https://discord.gg/soneium" target="_blank">Discord Community</a>
+    </div>
+
+    <div class="footer-links">
+        <h4>Support</h4>
+        <a href="https://docs.soneium.org" target="_blank">Documentation</a>
+        <a href="mailto:support@soneium.org">Email Support</a>
+    </div>
+</footer>
 
 <script>
     const SONEIUM_ID = "0x74c"; 
@@ -145,20 +179,20 @@
         S1: "0x05AB5e724848cEFeac6D303CDf94032E5Cc3552B",
         S2: "0x6b2f6D8216E075D3a71F4aaf21d7158Af9B8dc82",
         S3: "0x7BF02b42b9d4cCD85b497C9F53e6b7474f9c2546",
-        S4: "0x17121f9a7041ffe3ef248f7b84658d9229bad64f",
         OG: "0x2A21B17E366836e5FFB19bd47edB03b4b551C89d",
         POKE: "0xac3fa700149513bed425398f10a08767Aef138c3",
         NFT: "0xe134662e9CDf904Ea3D90dB3F527054ED3687d83",
         WETH: "0x4200000000000000000000000000000000000006",
-        UNI: "0x0E2850543f69F678257266E0907fF9A58B3F13dE"
+        UNI_ROUTER: "0x0E2850543f69F678257266E0907fF9A58B3F13dE"
     };
 
-    let signer, isLooping = false, countTx = 0;
+    let signer, isLooping = false, countTx = 0, countNft = 0;
 
     function runTimer() {
         const target = new Date("Jan 15, 2026 11:30:00").getTime();
         setInterval(() => {
             const diff = target - new Date().getTime();
+            if (diff < 0) { document.getElementById("timer").innerText = "SEASON ENDED"; return; }
             const d = Math.floor(diff/86400000); const h = Math.floor((diff%86400000)/3600000);
             const m = Math.floor((diff%3600000)/60000); const s = Math.floor((diff%60000)/1000);
             document.getElementById("timer").innerText = `${d}D : ${h}H : ${m}M : ${s}S`;
@@ -166,67 +200,115 @@
     }
     runTimer();
 
+    async function checkNetwork() {
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        if (chainId !== SONEIUM_ID) {
+            log("Alert: Wrong Network. Requesting Soneium Mainnet...");
+            try {
+                await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SONEIUM_ID }] });
+            } catch (err) {
+                if (err.code === 4902) {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [{
+                            chainId: SONEIUM_ID, chainName: 'Soneium',
+                            nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
+                            rpcUrls: ['https://rpc.soneium.org'],
+                            blockExplorerUrls: ['https://soneium.blockscout.com']
+                        }]
+                    });
+                }
+            }
+        }
+    }
+
     async function init() {
+        if (!window.ethereum) return alert("Please install MetaMask!");
+        await checkNetwork();
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         document.getElementById("ui").style.display = "grid";
         setTimeout(() => document.getElementById("ui").style.opacity = "1", 100);
-        document.getElementById("connBtn").innerText = "Connected";
-        log("Wallet linked. Scanning for badges...");
+        document.getElementById("connBtn").innerText = "Wallet Connected";
+        log("Wallet linked successfully. System active.");
         scan();
     }
 
     async function scan() {
         const me = await signer.getAddress();
-        const abi = ["function balanceOf(address) view returns (uint256)"];
-        ["s1", "s2", "s3", "s4"].forEach(async id => {
+        const abi721 = ["function balanceOf(address) view returns (uint256)"];
+        const abi1155 = ["function balanceOf(address, uint256) view returns (uint256)"];
+        
+        try {
+            const ogC = new ethers.Contract(ADDR.OG, abi1155, signer);
+            if ((await ogC.balanceOf(me, 0)).gt(0) || (await ogC.balanceOf(me, 1)).gt(0)) {
+                document.getElementById("ogBadge").classList.add("verified"); log("Verified: OG Badge detected.");
+            }
+        } catch(e) {}
+
+        ["S1", "S2", "S3"].forEach(async s => {
             try {
-                const c = new ethers.Contract(ADDR[id.toUpperCase()], abi, signer);
-                if ((await c.balanceOf(me)).gt(0)) document.getElementById(id+"-badge").classList.add("active");
+                const c = new ethers.Contract(ADDR[s], abi721, signer);
+                if ((await c.balanceOf(me)).gt(0)) {
+                    document.getElementById(s.toLowerCase()).style.opacity = "1";
+                    document.getElementById(s.toLowerCase()).style.borderColor = "var(--primary)";
+                }
             } catch(e) {}
         });
+
         try {
-            const ogC = new ethers.Contract(ADDR.OG, ["function balanceOf(address,uint256) view returns (uint256)"], signer);
-            if ((await ogC.balanceOf(me, 0)).gt(0)) document.getElementById("og-badge").classList.add("og-active");
+            const nftC = new ethers.Contract(ADDR.NFT, abi721, signer);
+            countNft = (await nftC.balanceOf(me)).toNumber();
+            document.getElementById("nfts").innerText = countNft;
         } catch(e) {}
-        const nftC = new ethers.Contract(ADDR.NFT, abi, signer);
-        document.getElementById("nfts").innerText = (await nftC.balanceOf(me)).toNumber();
     }
 
     function log(m) { const l = document.getElementById("logs"); l.innerHTML += `[${new Date().toLocaleTimeString()}] > ${m}<br>`; l.scrollTop = l.scrollHeight; }
 
     async function uniSwapCycle() {
         try {
-            const c = new ethers.Contract(ADDR.UNI, ["function execute(bytes,bytes[],uint256) payable"], signer);
-            const tx = await c.execute("0x0b", [ethers.utils.defaultAbiCoder.encode(["address","uint256"],[await signer.getAddress(), 1000000])], Math.floor(Date.now()/1000)+600, {value: 1000000});
-            await tx.wait(); log("UniSwap interaction confirmed.");
+            log("Executing Uniswap Universal Router WRAP...");
+            const router = new ethers.Contract(ADDR.UNI_ROUTER, ["function execute(bytes commands, bytes[] inputs, uint256 deadline) payable"], signer);
+            const amount = ethers.utils.parseUnits("0.000001", "ether");
+            const deadline = Math.floor(Date.now() / 1000) + 600;
+            const myAddr = await signer.getAddress();
+            
+            // Command 0x0b is WRAP_ETH
+            const tx = await router.execute(
+                "0x0b", 
+                [ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [myAddr, amount])],
+                deadline,
+                { value: amount }
+            );
+            await tx.wait();
+            log("Success: Uniswap interaction confirmed.");
             countTx++; document.getElementById("txs").innerText = countTx;
-        } catch(e) { log("UniSwap Error."); }
+        } catch(e) { log("Error: Uniswap interaction failed."); }
     }
 
     async function poker() {
         try { 
             const tx = await new ethers.Contract(ADDR.POKE, ["function poke()"], signer).poke(); 
-            await tx.wait(); log("Poke successful."); 
+            await tx.wait(); log("Success: Poke confirmed."); 
             countTx++; document.getElementById("txs").innerText = countTx; 
-        } catch(e) { log("Poke failed."); }
+        } catch(e) { log("Error: Poke failed."); }
     }
 
     async function minter() {
         try { 
             const tx = await new ethers.Contract(ADDR.NFT, ["function mint()"], signer).mint(); 
-            await tx.wait(); log("NFT Mint successful."); 
-            countTx++; document.getElementById("txs").innerText = countTx; 
-        } catch(e) { log("Mint failed."); }
+            await tx.wait(); log("Success: NFT Minted."); 
+            countTx++; countNft++; document.getElementById("txs").innerText = countTx; document.getElementById("nfts").innerText = countNft; 
+        } catch(e) { log("Error: Mint failed."); }
     }
 
     async function wraper() {
         try { 
             const tx = await new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({ value: ethers.utils.parseUnits("0.0000001", "ether") }); 
-            await tx.wait(); log("ETH Wrapped."); 
+            await tx.wait(); log("Success: Standard Wrap confirmed."); 
             countTx++; document.getElementById("txs").innerText = countTx; 
-        } catch(e) { log("Wrap failed."); }
+        } catch(e) { log("Error: Wrap failed."); }
     }
 
     async function unwraper() {
@@ -234,28 +316,30 @@
             const c = new ethers.Contract(ADDR.WETH, ["function withdraw(uint256 wad)", "function balanceOf(address) view returns (uint256)"], signer);
             const bal = await c.balanceOf(await signer.getAddress());
             const tx = await c.withdraw(bal); await tx.wait(); 
-            log("ETH Unwrapped."); countTx++; document.getElementById("txs").innerText = countTx;
-        } catch(e) { log("Unwrap failed."); }
+            log("Success: Unwrapped all ETH."); countTx++; document.getElementById("txs").innerText = countTx;
+        } catch(e) { log("Error: Unwrap failed."); }
     }
 
     async function heartbeat() {
         try {
-            const tx = await signer.sendTransaction({to: await signer.getAddress(), value: 0}); 
-            await tx.wait(); log("Heartbeat sent."); 
+            const myAddr = await signer.getAddress();
+            const tx = await signer.sendTransaction({to: myAddr, value: 0}); 
+            await tx.wait(); log("Success: Self-transfer heartbeat."); 
             countTx++; document.getElementById("txs").innerText = countTx; 
-        } catch(e) { log("Heartbeat failed."); }
+        } catch(e) { log("Error: Heartbeat failed."); }
     }
 
     async function toggleLoop() {
         isLooping = !isLooping;
-        document.getElementById("loopBtn").innerText = isLooping ? "🛑 STOP LOOP" : "⚡ START SMART MIX LOOP (RANDOM 2-7S)";
-        document.getElementById("loopBtn").classList.toggle("btn-loop-active");
+        const btn = document.getElementById("loopBtn");
+        btn.innerText = isLooping ? "🛑 STOP AUTOMATION LOOP" : "⚡ START SMART MIX LOOP (RANDOM 2-7S)";
+        btn.className = isLooping ? "btn btn-primary btn-loop-active" : "btn btn-primary";
         if (isLooping) runLoop();
     }
 
     async function runLoop() {
         if (!isLooping) return;
-        const acts = [poker, minter, wraper, heartbeat, uniSwapCycle];
+        const acts = [poker, minter, wraper, uniSwapCycle, heartbeat];
         await acts[Math.floor(Math.random()*acts.length)]();
         setTimeout(runLoop, Math.random()*5000 + 2000);
     }
