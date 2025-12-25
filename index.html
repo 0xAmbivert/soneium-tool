@@ -64,9 +64,8 @@
         .btn-outline:hover { border-color: #555; color: #fff; }
         .btn-loop-active { background: #ff3e3e !important; box-shadow: 0 0 20px rgba(255,62,62,0.4); }
 
-        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .stat-item { background: #000; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); cursor: pointer; transition: 0.3s; }
-        .stat-item:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .stat-item { background: #000; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); transition: 0.3s; }
         .stat-val { font-size: 1.5rem; font-weight: 900; color: var(--primary); display: block; }
         
         .log-area {
@@ -75,7 +74,6 @@
             color: var(--success); height: 300px; overflow-y: auto;
         }
 
-        /* Modal Styles */
         .modal-overlay {
             position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85);
             display:none; justify-content:center; align-items:center; z-index: 1000; backdrop-filter: blur(5px);
@@ -84,8 +82,6 @@
             background: #111; border: 1px solid var(--primary); border-radius: 24px; padding: 30px;
             width: 320px; text-align: center; box-shadow: 0 0 30px rgba(137, 87, 229, 0.2);
         }
-        .modal h3 { margin: 10px 0; font-weight: 900; }
-        .modal-icon { font-size: 3rem; margin-bottom: 15px; }
 
         @keyframes gold-shimmer { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); filter: brightness(1.2); } }
     </style>
@@ -94,9 +90,9 @@
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
     <div class="modal" onclick="event.stopPropagation()">
-        <div id="modalIcon" class="modal-icon">🏆</div>
-        <h3 id="modalTitle">Badge Details</h3>
-        <p style="color:var(--text-dim); font-size:0.8rem; margin-bottom:20px;">Verification required for on-chain update.</p>
+        <div id="modalIcon" class="modal-icon" style="font-size:3rem;">🏆</div>
+        <h3 id="modalTitle" style="margin:10px 0;">Badge Details</h3>
+        <p style="color:var(--text-dim); font-size:0.8rem; margin-bottom:20px;">Manual verification pings the contract for updates.</p>
         <button class="btn btn-primary" id="refreshBtn">🔄 SYNC BADGE STATUS</button>
         <button class="btn btn-outline" style="margin-top:10px;" onclick="closeModal()">CLOSE</button>
     </div>
@@ -135,13 +131,17 @@
         <div class="right-col">
             <div class="panel">
                 <div class="stats-row">
-                    <div class="stat-item" style="cursor:default; hover:none;">
+                    <div class="stat-item">
                         <span class="stat-val" id="txs">0</span>
-                        <span style="font-size: 0.6rem; color: var(--text-dim);">SESSION TRANSACTIONS</span>
+                        <span style="font-size: 0.55rem; color: var(--text-dim);">SESSION TXS</span>
                     </div>
-                    <div class="stat-item" style="cursor:default; hover:none;">
+                    <div class="stat-item">
+                        <span class="stat-val" id="totalTxs">0</span>
+                        <span style="font-size: 0.55rem; color: var(--text-dim);">TOTAL WALLET TXS</span>
+                    </div>
+                    <div class="stat-item">
                         <span class="stat-val" id="nfts">0</span>
-                        <span style="font-size: 0.6rem; color: var(--text-dim);">TOTAL NFT MINTED</span>
+                        <span style="font-size: 0.55rem; color: var(--text-dim);">NFT MINTED</span>
                     </div>
                 </div>
 
@@ -157,7 +157,7 @@
                 </div>
 
                 <h4 style="margin: 25px 0 10px 0; font-size: 0.7rem; color: var(--text-dim);">LIVE EXECUTION TERMINAL</h4>
-                <div class="log-area" id="logs">SYSTEM READY... STANDING BY FOR WALLET CONNECTION.</div>
+                <div class="log-area" id="logs">SYSTEM READY... STANDING BY.</div>
             </div>
         </div>
     </div>
@@ -177,9 +177,8 @@
         UNI_ROUTER: "0x0E2850543f69F678257266E0907fF9A58B3F13dE"
     };
 
-    let signer, isLooping = false, countTx = 0, countNft = 0;
+    let signer, provider, isLooping = false, countTx = 0, countNft = 0;
 
-    // POPUP LOGIC
     function openBadgePopup(id, emoji) {
         document.getElementById("modalIcon").innerText = emoji;
         document.getElementById("modalTitle").innerText = id + " Badge Status";
@@ -187,32 +186,12 @@
         document.getElementById("modalOverlay").style.display = "flex";
     }
 
-    function closeModal() {
-        document.getElementById("modalOverlay").style.display = "none";
-    }
+    function closeModal() { document.getElementById("modalOverlay").style.display = "none"; }
 
     async function refreshBadge(id) {
-        log(`Syncing ${id} Badge on-chain...`);
-        const me = await signer.getAddress();
-        const abi721 = ["function balanceOf(address) view returns (uint256)"];
-        const abi1155 = ["function balanceOf(address, uint256) view returns (uint256)"];
-        
-        try {
-            if(id === 'OG') {
-                const ogC = new ethers.Contract(ADDR.OG, abi1155, signer);
-                if ((await ogC.balanceOf(me, 0)).gt(0)) {
-                    document.getElementById("ogBadge").classList.add("verified");
-                }
-            } else {
-                const c = new ethers.Contract(ADDR[id], abi721, signer);
-                if ((await c.balanceOf(me)).gt(0)) {
-                    document.getElementById(id.toLowerCase()).style.opacity = "1";
-                    document.getElementById(id.toLowerCase()).style.borderColor = "var(--primary)";
-                }
-            }
-            log(`${id} Sync Complete.`);
-            closeModal();
-        } catch(e) { log(`Sync Failed for ${id}.`); }
+        log(`Pinging on-chain record for ${id}...`);
+        await scan(); // Full scan updates everything including total wallet txs
+        closeModal();
     }
 
     function runTimer() {
@@ -227,38 +206,15 @@
     }
     runTimer();
 
-    async function checkNetwork() {
-        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        if (chainId !== SONEIUM_ID) {
-            log("Alert: Wrong Network. Requesting Soneium Mainnet...");
-            try {
-                await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SONEIUM_ID }] });
-            } catch (err) {
-                if (err.code === 4902) {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [{
-                            chainId: SONEIUM_ID, chainName: 'Soneium',
-                            nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
-                            rpcUrls: ['https://rpc.soneium.org'],
-                            blockExplorerUrls: ['https://soneium.blockscout.com']
-                        }]
-                    });
-                }
-            }
-        }
-    }
-
     async function init() {
-        if (!window.ethereum) return alert("Please install MetaMask!");
-        await checkNetwork();
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        if (!window.ethereum) return alert("MetaMask not found!");
+        provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
         document.getElementById("ui").style.display = "grid";
         setTimeout(() => document.getElementById("ui").style.opacity = "1", 100);
-        document.getElementById("connBtn").innerText = "Wallet Connected";
-        log("Wallet linked successfully. System active.");
+        document.getElementById("connBtn").innerText = "Linked";
+        log("Wallet linked successfully.");
         scan();
     }
 
@@ -267,11 +223,13 @@
         const abi721 = ["function balanceOf(address) view returns (uint256)"];
         const abi1155 = ["function balanceOf(address, uint256) view returns (uint256)"];
         
+        // Fetch Total Wallet Txs
+        const total = await provider.getTransactionCount(me);
+        document.getElementById("totalTxs").innerText = total;
+
         try {
             const ogC = new ethers.Contract(ADDR.OG, abi1155, signer);
-            if ((await ogC.balanceOf(me, 0)).gt(0) || (await ogC.balanceOf(me, 1)).gt(0)) {
-                document.getElementById("ogBadge").classList.add("verified"); log("Verified: OG Badge detected.");
-            }
+            if ((await ogC.balanceOf(me, 0)).gt(0)) document.getElementById("ogBadge").classList.add("verified");
         } catch(e) {}
 
         ["S1", "S2", "S3", "S4"].forEach(async s => {
@@ -284,69 +242,50 @@
             } catch(e) {}
         });
 
-        try {
-            const nftC = new ethers.Contract(ADDR.NFT, abi721, signer);
-            countNft = (await nftC.balanceOf(me)).toNumber();
-            document.getElementById("nfts").innerText = countNft;
-        } catch(e) {}
+        const nftC = new ethers.Contract(ADDR.NFT, abi721, signer);
+        document.getElementById("nfts").innerText = (await nftC.balanceOf(me)).toNumber();
     }
 
     function log(m) { const l = document.getElementById("logs"); l.innerHTML += `[${new Date().toLocaleTimeString()}] > ${m}<br>`; l.scrollTop = l.scrollHeight; }
+    
+    function txUp() { 
+        countTx++; 
+        document.getElementById("txs").innerText = countTx;
+        // Increment the total count visually to save RPC hits
+        const total = parseInt(document.getElementById("totalTxs").innerText);
+        document.getElementById("totalTxs").innerText = total + 1;
+    }
 
     async function uniSwapCycle() {
         try {
-            log("Executing Uniswap Universal Router WRAP...");
             const router = new ethers.Contract(ADDR.UNI_ROUTER, ["function execute(bytes commands, bytes[] inputs, uint256 deadline) payable"], signer);
             const amount = ethers.utils.parseUnits("0.000001", "ether");
-            const deadline = Math.floor(Date.now() / 1000) + 600;
-            const myAddr = await signer.getAddress();
-            const tx = await router.execute("0x0b", [ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [myAddr, amount])], deadline, { value: amount });
-            await tx.wait();
-            log("Success: Uniswap interaction confirmed.");
-            countTx++; document.getElementById("txs").innerText = countTx;
-        } catch(e) { log("Error: Uniswap interaction failed."); }
+            const tx = await router.execute("0x0b", [ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [await signer.getAddress(), amount])], Math.floor(Date.now()/1000)+600, { value: amount });
+            await tx.wait(); log("UniSwap OK."); txUp();
+        } catch(e) { log("Uni Error."); }
     }
 
     async function poker() {
-        try { 
-            const tx = await new ethers.Contract(ADDR.POKE, ["function poke()"], signer).poke(); 
-            await tx.wait(); log("Success: Poke confirmed."); 
-            countTx++; document.getElementById("txs").innerText = countTx; 
-        } catch(e) { log("Error: Poke failed."); }
+        try { const tx = await new ethers.Contract(ADDR.POKE, ["function poke()"], signer).poke(); await tx.wait(); log("Poke OK."); txUp(); } catch(e) { log("Poke Failed."); }
     }
 
     async function minter() {
-        try { 
-            const tx = await new ethers.Contract(ADDR.NFT, ["function mint()"], signer).mint(); 
-            await tx.wait(); log("Success: NFT Minted."); 
-            countTx++; countNft++; document.getElementById("txs").innerText = countTx; document.getElementById("nfts").innerText = countNft; 
-        } catch(e) { log("Error: Mint failed."); }
+        try { const tx = await new ethers.Contract(ADDR.NFT, ["function mint()"], signer).mint(); await tx.wait(); log("Mint OK."); txUp(); scan(); } catch(e) { log("Mint Failed."); }
     }
 
     async function wraper() {
-        try { 
-            const tx = await new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({ value: ethers.utils.parseUnits("0.0000001", "ether") }); 
-            await tx.wait(); log("Success: Standard Wrap confirmed."); 
-            countTx++; document.getElementById("txs").innerText = countTx; 
-        } catch(e) { log("Error: Wrap failed."); }
+        try { const tx = await new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({ value: ethers.utils.parseUnits("0.0000001", "ether") }); await tx.wait(); log("Wrap OK."); txUp(); } catch(e) { log("Wrap Failed."); }
     }
 
     async function unwraper() {
         try { 
             const c = new ethers.Contract(ADDR.WETH, ["function withdraw(uint256 wad)", "function balanceOf(address) view returns (uint256)"], signer);
-            const bal = await c.balanceOf(await signer.getAddress());
-            const tx = await c.withdraw(bal); await tx.wait(); 
-            log("Success: Unwrapped all ETH."); countTx++; document.getElementById("txs").innerText = countTx;
-        } catch(e) { log("Error: Unwrap failed."); }
+            const tx = await c.withdraw(await c.balanceOf(await signer.getAddress())); await tx.wait(); log("Unwrap OK."); txUp();
+        } catch(e) { log("Unwrap Failed."); }
     }
 
     async function heartbeat() {
-        try {
-            const myAddr = await signer.getAddress();
-            const tx = await signer.sendTransaction({to: myAddr, value: 0}); 
-            await tx.wait(); log("Success: Self-transfer heartbeat."); 
-            countTx++; document.getElementById("txs").innerText = countTx; 
-        } catch(e) { log("Error: Heartbeat failed."); }
+        try { const tx = await signer.sendTransaction({to: await signer.getAddress(), value: 0}); await tx.wait(); log("Heartbeat OK."); txUp(); } catch(e) { log("Heartbeat Failed."); }
     }
 
     async function toggleLoop() {
