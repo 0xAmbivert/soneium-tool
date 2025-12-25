@@ -46,7 +46,7 @@
             width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 15px;
             background: #1a1a1a; border: 1px solid #333; display: flex;
             align-items: center; justify-content: center; font-size: 3rem;
-            filter: grayscale(1); opacity: 0.1; transition: 1.5s ease;
+            filter: grayscale(1); opacity: 0.1; transition: 1.5s ease; cursor: pointer;
         }
         .og-badge-circle.verified {
             background: var(--og-gold); filter: grayscale(0); opacity: 1;
@@ -65,7 +65,8 @@
         .btn-loop-active { background: #ff3e3e !important; box-shadow: 0 0 20px rgba(255,62,62,0.4); }
 
         .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .stat-item { background: #000; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
+        .stat-item { background: #000; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); cursor: pointer; transition: 0.3s; }
+        .stat-item:hover { border-color: var(--primary); transform: translateY(-3px); }
         .stat-val { font-size: 1.5rem; font-weight: 900; color: var(--primary); display: block; }
         
         .log-area {
@@ -74,18 +75,32 @@
             color: var(--success); height: 300px; overflow-y: auto;
         }
 
-        footer {
-            border-top: 1px solid var(--border); padding: 40px 60px;
-            background: #000; display: flex; justify-content: space-between; align-items: flex-start;
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85);
+            display:none; justify-content:center; align-items:center; z-index: 1000; backdrop-filter: blur(5px);
         }
-        .footer-links h4 { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 15px; }
-        .footer-links a { display: block; color: #fff; text-decoration: none; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.6; }
-        .footer-links a:hover { opacity: 1; color: var(--primary); }
+        .modal {
+            background: #111; border: 1px solid var(--primary); border-radius: 24px; padding: 30px;
+            width: 320px; text-align: center; box-shadow: 0 0 30px rgba(137, 87, 229, 0.2);
+        }
+        .modal h3 { margin: 10px 0; font-weight: 900; }
+        .modal-icon { font-size: 3rem; margin-bottom: 15px; }
 
         @keyframes gold-shimmer { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); filter: brightness(1.2); } }
     </style>
 </head>
 <body>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <div id="modalIcon" class="modal-icon">🏆</div>
+        <h3 id="modalTitle">Badge Details</h3>
+        <p style="color:var(--text-dim); font-size:0.8rem; margin-bottom:20px;">Verification required for on-chain update.</p>
+        <button class="btn btn-primary" id="refreshBtn">🔄 SYNC BADGE STATUS</button>
+        <button class="btn btn-outline" style="margin-top:10px;" onclick="closeModal()">CLOSE</button>
+    </div>
+</div>
 
 <nav>
     <div class="logo">SONEIUM <span>SCORE</span></div>
@@ -101,7 +116,7 @@
     <div id="ui" class="dashboard-grid" style="display:none; opacity: 0;">
         <div class="left-col">
             <div class="panel og-card">
-                <div id="ogBadge" class="og-badge-circle">⭐</div>
+                <div id="ogBadge" class="og-badge-circle" onclick="openBadgePopup('OG', '⭐')">⭐</div>
                 <h3 style="margin:0; font-size: 1.1rem;">OG Badge</h3>
                 <p style="color: var(--text-dim); font-size: 0.75rem;">Verified on Soneium Mainnet</p>
             </div>
@@ -109,10 +124,10 @@
             <div class="panel">
                 <h4 style="margin-top:0; font-size: 0.8rem; color: var(--text-dim);">SEASONAL ARCHIVE</h4>
                 <div class="stats-row" style="grid-template-columns: repeat(2, 1fr);">
-                    <div id="s1" class="stat-item" style="opacity:0.1">💎<br><small>S1</small></div>
-                    <div id="s2" class="stat-item" style="opacity:0.1">🔥<br><small>S2</small></div>
-                    <div id="s3" class="stat-item" style="opacity:0.1">👑<br><small>S3</small></div>
-                    <div id="s4" class="stat-item" style="opacity:0.1">🏆<br><small>S4</small></div>
+                    <div id="s1" class="stat-item" style="opacity:0.1" onclick="openBadgePopup('S1', '💎')">💎<br><small>S1</small></div>
+                    <div id="s2" class="stat-item" style="opacity:0.1" onclick="openBadgePopup('S2', '🔥')">🔥<br><small>S2</small></div>
+                    <div id="s3" class="stat-item" style="opacity:0.1" onclick="openBadgePopup('S3', '👑')">👑<br><small>S3</small></div>
+                    <div id="s4" class="stat-item" style="opacity:0.1" onclick="openBadgePopup('S4', '🏆')">🏆<br><small>S4</small></div>
                 </div>
             </div>
         </div>
@@ -120,11 +135,11 @@
         <div class="right-col">
             <div class="panel">
                 <div class="stats-row">
-                    <div class="stat-item">
+                    <div class="stat-item" style="cursor:default; hover:none;">
                         <span class="stat-val" id="txs">0</span>
                         <span style="font-size: 0.6rem; color: var(--text-dim);">SESSION TRANSACTIONS</span>
                     </div>
-                    <div class="stat-item">
+                    <div class="stat-item" style="cursor:default; hover:none;">
                         <span class="stat-val" id="nfts">0</span>
                         <span style="font-size: 0.6rem; color: var(--text-dim);">TOTAL NFT MINTED</span>
                     </div>
@@ -148,32 +163,6 @@
     </div>
 </main>
 
-<footer>
-    <div style="max-width: 300px;">
-        <div class="logo" style="margin-bottom: 15px;">SONEIUM <span>SCORE</span></div>
-        <p style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.6;">Automated utility suite for the Soneium ecosystem. Optimized for Uniswap and official Sony network interactions.</p>
-    </div>
-    
-    <div class="footer-links">
-        <h4>Ecosystem</h4>
-        <a href="https://soneium.org" target="_blank">Official Website</a>
-        <a href="https://bridge.soneium.org" target="_blank">Soneium Bridge</a>
-        <a href="https://soneium.blockscout.com" target="_blank">Block Explorer</a>
-    </div>
-
-    <div class="footer-links">
-        <h4>Socials</h4>
-        <a href="https://x.com/soneium" target="_blank">Twitter / X</a>
-        <a href="https://discord.gg/soneium" target="_blank">Discord Community</a>
-    </div>
-
-    <div class="footer-links">
-        <h4>Support</h4>
-        <a href="https://docs.soneium.org" target="_blank">Documentation</a>
-        <a href="mailto:support@soneium.org">Email Support</a>
-    </div>
-</footer>
-
 <script>
     const SONEIUM_ID = "0x74c"; 
     const ADDR = {
@@ -189,6 +178,42 @@
     };
 
     let signer, isLooping = false, countTx = 0, countNft = 0;
+
+    // POPUP LOGIC
+    function openBadgePopup(id, emoji) {
+        document.getElementById("modalIcon").innerText = emoji;
+        document.getElementById("modalTitle").innerText = id + " Badge Status";
+        document.getElementById("refreshBtn").onclick = () => refreshBadge(id);
+        document.getElementById("modalOverlay").style.display = "flex";
+    }
+
+    function closeModal() {
+        document.getElementById("modalOverlay").style.display = "none";
+    }
+
+    async function refreshBadge(id) {
+        log(`Syncing ${id} Badge on-chain...`);
+        const me = await signer.getAddress();
+        const abi721 = ["function balanceOf(address) view returns (uint256)"];
+        const abi1155 = ["function balanceOf(address, uint256) view returns (uint256)"];
+        
+        try {
+            if(id === 'OG') {
+                const ogC = new ethers.Contract(ADDR.OG, abi1155, signer);
+                if ((await ogC.balanceOf(me, 0)).gt(0)) {
+                    document.getElementById("ogBadge").classList.add("verified");
+                }
+            } else {
+                const c = new ethers.Contract(ADDR[id], abi721, signer);
+                if ((await c.balanceOf(me)).gt(0)) {
+                    document.getElementById(id.toLowerCase()).style.opacity = "1";
+                    document.getElementById(id.toLowerCase()).style.borderColor = "var(--primary)";
+                }
+            }
+            log(`${id} Sync Complete.`);
+            closeModal();
+        } catch(e) { log(`Sync Failed for ${id}.`); }
+    }
 
     function runTimer() {
         const target = new Date("Jan 15, 2026 11:30:00").getTime();
@@ -275,13 +300,7 @@
             const amount = ethers.utils.parseUnits("0.000001", "ether");
             const deadline = Math.floor(Date.now() / 1000) + 600;
             const myAddr = await signer.getAddress();
-            
-            const tx = await router.execute(
-                "0x0b", 
-                [ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [myAddr, amount])],
-                deadline,
-                { value: amount }
-            );
+            const tx = await router.execute("0x0b", [ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [myAddr, amount])], deadline, { value: amount });
             await tx.wait();
             log("Success: Uniswap interaction confirmed.");
             countTx++; document.getElementById("txs").innerText = countTx;
