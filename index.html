@@ -64,7 +64,7 @@
         .btn-outline:hover { border-color: #555; color: #fff; }
         .btn-loop-active { background: #ff3e3e !important; box-shadow: 0 0 20px rgba(255,62,62,0.4); }
 
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+        .stats-row { display: grid; gap: 15px; margin: 20px 0; }
         .stat-item { background: #000; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); transition: 0.3s; }
         .stat-val { font-size: 1.5rem; font-weight: 900; color: var(--primary); display: block; }
         
@@ -82,6 +82,14 @@
             background: #111; border: 1px solid var(--primary); border-radius: 24px; padding: 30px;
             width: 320px; text-align: center; box-shadow: 0 0 30px rgba(137, 87, 229, 0.2);
         }
+
+        footer {
+            border-top: 1px solid var(--border); padding: 40px 60px;
+            background: #000; display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .footer-links h4 { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 15px; }
+        .footer-links a { display: block; color: #fff; text-decoration: none; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.6; }
+        .footer-links a:hover { opacity: 1; color: var(--primary); }
 
         @keyframes gold-shimmer { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); filter: brightness(1.2); } }
     </style>
@@ -130,7 +138,7 @@
 
         <div class="right-col">
             <div class="panel">
-                <div class="stats-row">
+                <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
                     <div class="stat-item">
                         <span class="stat-val" id="txs">0</span>
                         <span style="font-size: 0.55rem; color: var(--text-dim);">SESSION TXS</span>
@@ -163,6 +171,32 @@
     </div>
 </main>
 
+<footer>
+    <div style="max-width: 300px;">
+        <div class="logo" style="margin-bottom: 15px;">SONEIUM <span>SCORE</span></div>
+        <p style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.6;">Automated utility suite for the Soneium ecosystem. Optimized for Uniswap and official Sony network interactions.</p>
+    </div>
+    
+    <div class="footer-links">
+        <h4>Ecosystem</h4>
+        <a href="https://soneium.org" target="_blank">Official Website</a>
+        <a href="https://bridge.soneium.org" target="_blank">Soneium Bridge</a>
+        <a href="https://soneium.blockscout.com" target="_blank">Block Explorer</a>
+    </div>
+
+    <div class="footer-links">
+        <h4>Socials</h4>
+        <a href="https://x.com/soneium" target="_blank">Twitter / X</a>
+        <a href="https://discord.gg/soneium" target="_blank">Discord Community</a>
+    </div>
+
+    <div class="footer-links">
+        <h4>Support</h4>
+        <a href="https://docs.soneium.org" target="_blank">Documentation</a>
+        <a href="mailto:support@soneium.org">Email Support</a>
+    </div>
+</footer>
+
 <script>
     const SONEIUM_ID = "0x74c"; 
     const ADDR = {
@@ -190,7 +224,7 @@
 
     async function refreshBadge(id) {
         log(`Pinging on-chain record for ${id}...`);
-        await scan(); // Full scan updates everything including total wallet txs
+        await scan();
         closeModal();
     }
 
@@ -223,7 +257,6 @@
         const abi721 = ["function balanceOf(address) view returns (uint256)"];
         const abi1155 = ["function balanceOf(address, uint256) view returns (uint256)"];
         
-        // Fetch Total Wallet Txs
         const total = await provider.getTransactionCount(me);
         document.getElementById("totalTxs").innerText = total;
 
@@ -251,7 +284,6 @@
     function txUp() { 
         countTx++; 
         document.getElementById("txs").innerText = countTx;
-        // Increment the total count visually to save RPC hits
         const total = parseInt(document.getElementById("totalTxs").innerText);
         document.getElementById("totalTxs").innerText = total + 1;
     }
