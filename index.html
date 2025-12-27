@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soneium Score Optimizer | Desktop v2.0</title>
+    <title>Soneium Score Optimizer | v1.1</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
@@ -26,6 +26,14 @@
         }
         .logo { font-weight: 900; font-size: 1.2rem; letter-spacing: -0.5px; }
         .logo span { color: var(--primary); }
+
+        .nav-controls { display: flex; gap: 10px; align-items: center; }
+        .address-input { 
+            background: #111; border: 1px solid var(--border); color: white; 
+            padding: 10px; border-radius: 12px; font-size: 0.8rem; width: 220px;
+            outline: none; transition: 0.3s;
+        }
+        .address-input:focus { border-color: var(--primary); }
 
         main {
             flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -58,6 +66,7 @@
             padding: 12px 24px; border-radius: 12px; border: none; font-weight: 700;
             cursor: pointer; transition: 0.2s; font-size: 0.9rem;
         }
+        .btn-view { background: #222; color: #fff; border: 1px solid var(--border); }
         .btn-connect { background: #fff; color: #000; }
         .btn-primary { background: var(--primary); color: #fff; width: 100%; margin-bottom: 10px; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dim); width: 100%; margin-bottom: 10px; }
@@ -107,8 +116,12 @@
 </div>
 
 <nav>
-    <div class="logo">SONEIUM <span>SCORE</span></div>
-    <button id="connBtn" class="btn btn-connect" onclick="init()">Connect Wallet</button>
+    <div class="logo">SONEIUM <span>SCORE v1.1</span></div>
+    <div class="nav-controls">
+        <input type="text" id="manualAddr" class="address-input" placeholder="Enter EVM Address (0x...)">
+        <button class="btn btn-view" onclick="viewOnly()">View Stats</button>
+        <button id="connBtn" class="btn btn-connect" onclick="init()">Connect Wallet</button>
+    </div>
 </nav>
 
 <main>
@@ -173,7 +186,7 @@
 
 <footer>
     <div style="max-width: 300px;">
-        <div class="logo" style="margin-bottom: 15px;">SONEIUM <span>SCORE</span></div>
+        <div class="logo" style="margin-bottom: 15px;">SONEIUM <span>SCORE v1.1</span></div>
         <p style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.6;">Automated utility suite for the Soneium ecosystem. Optimized for Uniswap and official Sony network interactions.</p>
     </div>
     
@@ -211,7 +224,10 @@
         UNI_ROUTER: "0x0E2850543f69F678257266E0907fF9A58B3F13dE"
     };
 
-    let signer, provider, isLooping = false, countTx = 0, countNft = 0;
+    let signer, provider, viewAddress, isLooping = false, countTx = 0, countNft = 0;
+
+    // Default Provider for View Mode
+    const defaultProvider = new ethers.providers.JsonRpcProvider("https://rpc.soneium.org");
 
     function openBadgePopup(id, emoji) {
         document.getElementById("modalIcon").innerText = emoji;
@@ -240,47 +256,75 @@
     }
     runTimer();
 
+    async function viewOnly() {
+        const input = document.getElementById("manualAddr").value.trim();
+        if (!ethers.utils.isAddress(input)) return alert("Invalid EVM Address");
+        viewAddress = input;
+        provider = defaultProvider;
+        signer = null; // No signer in view mode
+        showUI();
+        log(`Entering View Mode for: ${viewAddress}`);
+        scan();
+    }
+
     async function init() {
         if (!window.ethereum) return alert("MetaMask not found!");
         provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
-        document.getElementById("ui").style.display = "grid";
-        setTimeout(() => document.getElementById("ui").style.opacity = "1", 100);
+        viewAddress = await signer.getAddress();
+        showUI();
         document.getElementById("connBtn").innerText = "Linked";
-        log("Wallet linked successfully.");
+        log("Wallet connected successfully.");
         scan();
     }
 
+    function showUI() {
+        document.getElementById("ui").style.display = "grid";
+        setTimeout(() => document.getElementById("ui").style.opacity = "1", 100);
+    }
+
     async function scan() {
-        const me = await signer.getAddress();
+        const addr = viewAddress;
         const abi721 = ["function balanceOf(address) view returns (uint256)"];
         const abi1155 = ["function balanceOf(address, uint256) view returns (uint256)"];
         
-        const total = await provider.getTransactionCount(me);
+        const total = await provider.getTransactionCount(addr);
         document.getElementById("totalTxs").innerText = total;
 
         try {
-            const ogC = new ethers.Contract(ADDR.OG, abi1155, signer);
-            if ((await ogC.balanceOf(me, 0)).gt(0)) document.getElementById("ogBadge").classList.add("verified");
+            const ogC = new ethers.Contract(ADDR.OG, abi1155, provider);
+            if ((await ogC.balanceOf(addr, 0)).gt(0)) document.getElementById("ogBadge").classList.add("verified");
         } catch(e) {}
 
         ["S1", "S2", "S3", "S4"].forEach(async s => {
             try {
-                const c = new ethers.Contract(ADDR[s], abi721, signer);
-                if ((await c.balanceOf(me)).gt(0)) {
-                    document.getElementById(s.toLowerCase()).style.opacity = "1";
-                    document.getElementById(s.toLowerCase()).style.borderColor = "var(--primary)";
+                const c = new ethers.Contract(ADDR[s], abi721, provider);
+                const el = document.getElementById(s.toLowerCase());
+                if ((await c.balanceOf(addr)).gt(0)) {
+                    el.style.opacity = "1";
+                    el.style.borderColor = "var(--primary)";
+                } else {
+                    el.style.opacity = "0.1";
+                    el.style.borderColor = "var(--border)";
                 }
             } catch(e) {}
         });
 
-        const nftC = new ethers.Contract(ADDR.NFT, abi721, signer);
-        document.getElementById("nfts").innerText = (await nftC.balanceOf(me)).toNumber();
+        const nftC = new ethers.Contract(ADDR.NFT, abi721, provider);
+        document.getElementById("nfts").innerText = (await nftC.balanceOf(addr)).toNumber();
     }
 
     function log(m) { const l = document.getElementById("logs"); l.innerHTML += `[${new Date().toLocaleTimeString()}] > ${m}<br>`; l.scrollTop = l.scrollHeight; }
     
+    function checkSigner() {
+        if (!signer) {
+            log("<span style='color: #ff3e3e'>Action Denied: Connect wallet to execute transactions.</span>");
+            return false;
+        }
+        return true;
+    }
+
     function txUp() { 
         countTx++; 
         document.getElementById("txs").innerText = countTx;
@@ -289,38 +333,45 @@
     }
 
     async function uniSwapCycle() {
+        if(!checkSigner()) return;
         try {
             const router = new ethers.Contract(ADDR.UNI_ROUTER, ["function execute(bytes commands, bytes[] inputs, uint256 deadline) payable"], signer);
             const amount = ethers.utils.parseUnits("0.000001", "ether");
-            const tx = await router.execute("0x0b", [ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [await signer.getAddress(), amount])], Math.floor(Date.now()/1000)+600, { value: amount });
+            const tx = await router.execute("0x0b", [ethers.utils.defaultAbiCoder.encode(["address", "uint256"], [viewAddress, amount])], Math.floor(Date.now()/1000)+600, { value: amount });
             await tx.wait(); log("UniSwap OK."); txUp();
         } catch(e) { log("Uni Error."); }
     }
 
     async function poker() {
+        if(!checkSigner()) return;
         try { const tx = await new ethers.Contract(ADDR.POKE, ["function poke()"], signer).poke(); await tx.wait(); log("Poke OK."); txUp(); } catch(e) { log("Poke Failed."); }
     }
 
     async function minter() {
+        if(!checkSigner()) return;
         try { const tx = await new ethers.Contract(ADDR.NFT, ["function mint()"], signer).mint(); await tx.wait(); log("Mint OK."); txUp(); scan(); } catch(e) { log("Mint Failed."); }
     }
 
     async function wraper() {
+        if(!checkSigner()) return;
         try { const tx = await new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({ value: ethers.utils.parseUnits("0.0000001", "ether") }); await tx.wait(); log("Wrap OK."); txUp(); } catch(e) { log("Wrap Failed."); }
     }
 
     async function unwraper() {
+        if(!checkSigner()) return;
         try { 
             const c = new ethers.Contract(ADDR.WETH, ["function withdraw(uint256 wad)", "function balanceOf(address) view returns (uint256)"], signer);
-            const tx = await c.withdraw(await c.balanceOf(await signer.getAddress())); await tx.wait(); log("Unwrap OK."); txUp();
+            const tx = await c.withdraw(await c.balanceOf(viewAddress)); await tx.wait(); log("Unwrap OK."); txUp();
         } catch(e) { log("Unwrap Failed."); }
     }
 
     async function heartbeat() {
-        try { const tx = await signer.sendTransaction({to: await signer.getAddress(), value: 0}); await tx.wait(); log("Heartbeat OK."); txUp(); } catch(e) { log("Heartbeat Failed."); }
+        if(!checkSigner()) return;
+        try { const tx = await signer.sendTransaction({to: viewAddress, value: 0}); await tx.wait(); log("Heartbeat OK."); txUp(); } catch(e) { log("Heartbeat Failed."); }
     }
 
     async function toggleLoop() {
+        if(!checkSigner()) return;
         isLooping = !isLooping;
         const btn = document.getElementById("loopBtn");
         btn.innerText = isLooping ? "🛑 STOP AUTOMATION LOOP" : "⚡ START SMART MIX LOOP (RANDOM 2-7S)";
