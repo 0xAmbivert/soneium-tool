@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soneium Score Optimizer | v1.1.1 Stable</title>
+    <title>Soneium Score Optimizer | v1.1.1</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
@@ -12,38 +12,31 @@
             --og-gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
             --success: #00ff88; --text: #ffffff; --text-dim: #888;
         }
-
         body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
         nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 60px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
         .logo { font-weight: 900; font-size: 1.2rem; letter-spacing: -0.5px; }
         .logo span { color: var(--primary); }
         .nav-controls { display: flex; gap: 10px; align-items: center; }
         .address-input { background: #111; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 12px; font-size: 0.8rem; width: 220px; outline: none; }
-        
         main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; max-width: 1200px; margin: 0 auto; width: 100%; }
         .timer-hero { text-align: center; margin-bottom: 40px; }
         #timer { font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; font-weight: 900; color: #ff3e3e; }
-        
         .dashboard-grid { display: grid; grid-template-columns: 350px 1fr; gap: 30px; width: 100%; }
         .panel { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 25px; }
         .og-badge-circle { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 15px; background: #1a1a1a; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 3rem; filter: grayscale(1); opacity: 0.1; transition: 1.5s ease; cursor: pointer; }
         .og-badge-circle.verified { background: var(--og-gold); filter: grayscale(0); opacity: 1; border: 2px solid #fff; box-shadow: 0 0 50px rgba(191, 149, 63, 0.4); animation: gold-shimmer 3s infinite linear; }
-        
         .btn { padding: 12px 24px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
         .btn-view { background: #222; color: #fff; border: 1px solid var(--border); }
         .btn-connect { background: #fff; color: #000; }
         .btn-primary { background: var(--primary); color: #fff; width: 100%; margin-bottom: 10px; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dim); width: 100%; margin-bottom: 10px; }
         .btn-loop-active { background: #ff3e3e !important; box-shadow: 0 0 20px rgba(255,62,62,0.4); }
-
         .stats-row { display: grid; gap: 15px; margin: 20px 0; }
         .stat-item { background: #000; padding: 15px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
         .stat-val { font-size: 1.5rem; font-weight: 900; color: var(--primary); display: block; }
         .log-area { background: #000; border: 1px solid var(--border); border-radius: 15px; padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--success); height: 250px; overflow-y: auto; }
-
         .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display:none; justify-content:center; align-items:center; z-index: 1000; backdrop-filter: blur(5px); }
         .modal { background: #111; border: 1px solid var(--primary); border-radius: 24px; padding: 30px; width: 320px; text-align: center; }
-
         footer { border-top: 1px solid var(--border); padding: 40px 60px; background: #000; display: flex; justify-content: space-between; }
         .footer-links h4 { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 15px; }
         .footer-links a { display: block; color: #fff; text-decoration: none; margin-bottom: 8px; font-size: 0.9rem; opacity: 0.6; }
@@ -230,7 +223,10 @@
 
     async function poker() { if(!checkSigner()) return; try { await (await new ethers.Contract(ADDR.POKE, ["function poke()"], signer).poke()).wait(); log("Poke OK."); txUp(); } catch(e){} }
     async function minter() { if(!checkSigner()) return; try { await (await new ethers.Contract(ADDR.NFT, ["function mint()"], signer).mint()).wait(); log("Mint OK."); txUp(); } catch(e){} }
-    async function wraper() { if(!checkSigner()) return; try { await (await new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({value:ethers.utils.parseEther("0.0001")})).wait(); log("Wrap OK."); txUp(); } catch(e){} }
+    
+    // RESTORED ORIGINAL WRAP LOGIC
+    async function wraper() { if(!checkSigner()) return; try { await (await new ethers.Contract(ADDR.WETH, ["function deposit() payable"], signer).deposit({value:ethers.utils.parseUnits("0.0000001", "ether")})).wait(); log("Wrap OK."); txUp(); } catch(e){} }
+    
     async function unwraper() { if(!checkSigner()) return; try { const c = new ethers.Contract(ADDR.WETH, ["function withdraw(uint256 wad)", "function balanceOf(address) view returns (uint256)"], signer); await (await c.withdraw(await c.balanceOf(viewAddr))).wait(); log("Unwrap OK."); txUp(); } catch(e){} }
     async function heartbeat() { if(!checkSigner()) return; try { await (await signer.sendTransaction({to:viewAddr, value:0})).wait(); log("Heartbeat OK."); txUp(); } catch(e){} }
 
